@@ -1,0 +1,55 @@
+{
+    "forced_march": {
+        "name": "Forced March",
+        "type": "Event",
+        "effect_id": "BONUS_ADVANCE",
+        "description": "Choose one Column. Perform an Advance action in that Column. This does not count as your one Column action for the Logistics Phase.",
+        "free_action": true
+    },
+    "supply_drop": {
+        "name": "Supply Drop",
+        "type": "Event",
+        "effect_id": "DRAW_CARDS",
+        "params": {
+            "amount": 2
+        },
+        "description": "Draw 2 cards from your deck. If this puts you over the Hand Limit of 7, you must immediately discard down to 7.",
+        "free_action": true
+    },
+    "industrial_sabotage": {
+        "name": "Industrial Sabotage",
+        "type": "Event",
+        "effect_id": "DISCARD_OPPONENT_ASSET",
+        "target_lines": [
+            "Rear",
+            "Reserve"
+        ],
+        "description": "Choose an opponent's face-down asset in their Rear (Depot) or Reserve line. The opponent must immediately discard that asset.",
+        "free_action": true
+    },
+    "rapid_deployment": {
+        "name": "Rapid Deployment",
+        "type": "Event",
+        "effect_id": "RESERVE_TO_FRONT_IMMEDIATE",
+        "description": "Choose one friendly asset in your Reserve line and move it to the Front. The asset becomes Exposed. If it has an 'Activate:' ability, you may resolve it immediately.",
+        "free_action": true
+    },
+    "battlefield_recon": {
+        "name": "Battlefield Recon",
+        "type": "Event",
+        "effect_id": "REVEAL_OPPONENT_LINES",
+        "target_lines": [
+            "Rear",
+            "Reserve"
+        ],
+        "description": "Reveal all face-down assets in your opponent's Reserve and Rear lines. These assets remain face-up until they are moved or discarded.",
+        "free_action": true
+    },
+    "munitions_reserve": {
+        "name": "Munitions Reserve",
+        "type": "Event",
+        "effect_id": "ADD_HEAVY_TOKEN",
+        "description": "Choose a friendly Heavy asset at the Front. Immediately place one 'Aim,' 'Load,' or 'Preparation' token on that card.",
+        "free_action": true
+    }
+}

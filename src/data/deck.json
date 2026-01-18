@@ -1,0 +1,25 @@
+{
+    "deck": {
+        "total_size": 30,
+        "starting_hand_size": 6,
+        "hand_limit": 7,
+        "composition": {
+            "units": {
+                "scout": 4,
+                "skirmishers": 3,
+                "line_infantry": 5,
+                "trench_raiders": 3,
+                "artillery_battery": 2,
+                "heavy_cannon": 3
+            },
+            "events": {
+                "forced_march": 2,
+                "supply_drop": 2,
+                "industrial_sabotage": 1,
+                "rapid_deployment": 2,
+                "battlefield_recon": 2,
+                "munitions_reserve": 1
+            }
+        }
+    }
+}
