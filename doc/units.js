@@ -1,0 +1,46 @@
+{
+    "scout": {
+        "name": "Scout",
+            "weight": "Light",
+                "activate": "FLIP_OPPONENT_RESERVE_THEN_DISCARD",
+                    "primary": null,
+                        "militiaRecycle": true,
+                            "description": "Choose an opponent's face-down asset in a Reserve line and flip it face-up. Then, discard this Scout."
+    },
+    "skirmishers": {
+        "name": "Skirmishers",
+            "weight": "Light",
+                "activate": "REMOVE_TOKENS_THEN_DISCARD",
+                    "primary": "DESTROY_LIGHT_AT_FRONT",
+                        "militiaRecycle": true,
+                            "description": "Remove all tokens from a Medium or Heavy asset at this Front, then discard. Primary: Destroy a Light asset."
+    },
+    "line_infantry": {
+        "name": "Line Infantry",
+            "weight": "Medium",
+                "activate": null,
+                    "primary": "DESTROY_NON_HEAVY_AT_FRONT",
+                        "description": "Standard front control unit. Primary: Destroy a non-Heavy asset at this Front."
+    },
+    "trench_raiders": {
+        "name": "Trench Raiders",
+            "weight": "Medium",
+                "activate": "FORCE_WITHDRAW_OPPONENT",
+                    "primary": "DESTROY_LIGHT_AT_FRONT",
+                        "description": "Activate: Perform a Withdraw action on the opponent's asset at this Front. Primary: Destroy a Light asset."
+    },
+    "artillery_battery": {
+        "name": "Artillery Battery",
+            "weight": "Heavy",
+                "activate": null,
+                    "primary": "AIM_OR_FIRE",
+                        "description": "Primary: Aim (place token) or Fire (remove token to destroy any enemy asset at this Front)."
+    },
+    "heavy_cannon": {
+        "name": "Heavy Cannon",
+            "weight": "Heavy",
+                "activate": null,
+                    "primary": "DESTROY_OR_FORCE_WITHDRAW",
+                        "description": "Primary: Destroy the enemy asset at this Front OR force the opponent to Withdraw it to their hand."
+    }
+}
