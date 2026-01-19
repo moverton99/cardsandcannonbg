@@ -1,5 +1,5 @@
 import { Game, Move } from 'boardgame.io';
-import { INVALID_MOVE } from 'boardgame.io/core';
+import { INVALID_MOVE, TurnOrder } from 'boardgame.io/core';
 import { GameState, PHASES, COLUMNS, PlayerID, Card, Slot, UnitId, EventId } from './types';
 
 import deckData from '../data/deck.json';
@@ -61,19 +61,15 @@ const DrawCard: Move<GameState> = ({ G, playerID, events }) => {
 };
 
 const CheckHandLimit: Move<GameState> = ({ G, playerID, events }, discards: number[]) => {
-    // This is a simplified "Discard Down" move
     const player = G.players[playerID as PlayerID];
-
-    // logic to remove cards would go here. For scaffold, auto-discard last drawn
     while (player.hand.length > MAX_HAND_SIZE) {
         player.hand.pop();
     }
-
-    events.endPhase();
+    events.endTurn();
 };
 
 const Pass: Move<GameState> = ({ events }) => {
-    events.endPhase();
+    events.endTurn();
 };
 
 
@@ -151,7 +147,7 @@ const Ship: Move<GameState> = ({ G, playerID, events }, columnId: string, cardIn
 
     player.hand.splice(cardIndex, 1);
 
-    events.endPhase(); // Commitment is single action then end phase
+    events.endTurn(); // Commitment is single action then end turn
 };
 
 const PrimaryAction: Move<GameState> = ({ G, playerID }, columnId: string) => {
@@ -201,21 +197,27 @@ export const CardsAndCannon: Game<GameState> = {
     phases: {
         [PHASES.SUPPLY]: {
             start: true,
-            onBegin: ({ G, ctx }) => {
-                const player = G.players[ctx.currentPlayer as PlayerID];
-                if (player.deck.length > 0) {
-                    player.hand.push(player.deck.pop()!);
-                }
-            },
-            moves: { CheckHandLimit }, // Or just end phase automatically if < limit
-            next: PHASES.LOGISTICS,
-        },
-        [PHASES.LOGISTICS]: {
-            moves: { Advance, Withdraw, Pass, PlayEvent },
             turn: {
+                order: TurnOrder.ONCE,
+                onBegin: ({ G, ctx }) => {
+                    const player = G.players[ctx.currentPlayer as PlayerID];
+                    if (player.deck.length > 0) {
+                        player.hand.push(player.deck.pop()!);
+                    }
+                },
                 minMoves: 1,
                 maxMoves: 1,
             },
+            moves: { CheckHandLimit },
+            next: PHASES.LOGISTICS,
+        },
+        [PHASES.LOGISTICS]: {
+            turn: {
+                order: TurnOrder.ONCE,
+                minMoves: 1,
+                maxMoves: 1,
+            },
+            moves: { Advance, Withdraw, Pass, PlayEvent },
             next: PHASES.ARRIVAL,
         },
         [PHASES.ARRIVAL]: {
@@ -253,7 +255,12 @@ export const CardsAndCannon: Game<GameState> = {
             next: PHASES.COMMITMENT,
         },
         [PHASES.COMMITMENT]: {
-            moves: { Ship },
+            turn: {
+                order: TurnOrder.ONCE,
+                minMoves: 1,
+                maxMoves: 1,
+            },
+            moves: { Ship, Pass },
             next: PHASES.SUPPLY, // Loop back
         },
     },

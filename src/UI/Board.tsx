@@ -13,6 +13,73 @@ const CARD_STYLE = {
     SELECTED_HEIGHT: 182,
     SELECTED_LIFT: -25,
     GAP: 10,
+    BOARD_SLOT_PADDING: 5,
+};
+
+const BoardCard: React.FC<{ card: any, isFaceUp: boolean }> = ({ card, isFaceUp }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const details = card.type === 'UNIT' ? (unitData as any)[card.unitId] : (eventData as any)[card.eventId];
+
+    const style: React.CSSProperties = {
+        width: isHovered ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
+        height: isHovered ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
+        background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#554444',
+        border: isHovered ? '3px solid yellow' : '1px solid #777',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: isHovered ? 'flex-start' : 'center',
+        transition: 'all 0.2s ease-in-out',
+        cursor: 'pointer',
+        position: isHovered ? 'absolute' : 'relative',
+        zIndex: isHovered ? 100 : 1,
+        textAlign: 'center',
+        padding: isHovered ? '15px' : '5px',
+        boxShadow: isHovered ? '0 10px 25px rgba(0,0,0,0.8)' : 'none',
+        transform: isHovered ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
+        overflow: 'hidden',
+    };
+
+    return (
+        <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={style}
+        >
+            {!isFaceUp ? (
+                <div style={{ fontWeight: 'bold' }}>BACK</div>
+            ) : (
+                <>
+                    <div style={{ fontSize: isHovered ? '0.9em' : '0.7em', fontWeight: 'bold', marginBottom: isHovered ? '5px' : '0' }}>
+                        {details?.name || 'Unit'}
+                    </div>
+                    {isHovered ? (
+                        <div style={{ width: '100%', textAlign: 'left' }}>
+                            <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: '10px' }}>
+                                {card.type} ({details?.weight})
+                            </div>
+                            {card.type === 'UNIT' && details?.activate && (
+                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
+                                    <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
+                                </div>
+                            )}
+                            {card.type === 'UNIT' && details?.primary && (
+                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
+                                    <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
+                                </div>
+                            )}
+                            <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
+                                {details?.description}
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ fontSize: '0.5em', opacity: 0.7 }}>{card.type}</div>
+                    )}
+                </>
+            )}
+        </div>
+    );
 };
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
@@ -36,23 +103,23 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     const renderSlot = (slot: Slot, label: string) => {
         return (
             <div style={{
-                border: '1px solid #777',
-                width: `${CARD_STYLE.WIDTH}px`,
-                height: `${CARD_STYLE.HEIGHT}px`,
+                border: '2px dashed #444',
+                width: `${CARD_STYLE.WIDTH + CARD_STYLE.BOARD_SLOT_PADDING * 2}px`,
+                height: `${CARD_STYLE.HEIGHT + CARD_STYLE.BOARD_SLOT_PADDING * 2}px`,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: slot.status === 'OCCUPIED' ? (slot.isFaceUp ? '#446644' : '#554444') : '#333',
-                margin: '5px'
+                background: '#222',
+                margin: '5px',
+                position: 'relative',
+                borderRadius: '10px'
             }}>
-                <small>{label}</small>
-                {slot.status === 'OCCUPIED' && (
-                    <div>{slot.isFaceUp ?
-                        (slot.card?.type === 'UNIT' ? slot.card.unitId : 'Event?')
-                        : 'Back'}</div>
+                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.6em', color: '#888' }}>{label}</small>
+                {slot.status === 'OCCUPIED' && slot.card && (
+                    <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} />
                 )}
-                {slot.isOperational && <div style={{ color: 'yellow' }}>Ready</div>}
+                {slot.isOperational && <div style={{ position: 'absolute', bottom: '-15px', color: 'yellow', fontSize: '0.6em' }}>READY</div>}
             </div>
         );
     };
@@ -188,16 +255,28 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
             <div style={{ marginBottom: '10px' }}>
                 Phase: <strong>{currentPhase}</strong> | Player: <strong>{ctx.currentPlayer}</strong>
-                {currentPhase === PHASES.SUPPLY && isMyTurn && <button onClick={() => moves.CheckHandLimit([])}>Confirm Hand</button>}
-                {currentPhase === PHASES.ARRIVAL && isMyTurn && <button onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
-                {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {COLUMNS.map(id => renderColumn(id))}
                 </div>
-                {renderHand()}
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '15px', marginTop: '20px' }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        padding: '10px',
+                        background: '#333',
+                        borderRadius: '8px',
+                        marginBottom: '0px'
+                    }}>
+                        {currentPhase === PHASES.SUPPLY && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.CheckHandLimit([])}>Confirm Hand</button>}
+                        {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
+                        {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
+                    </div>
+                    {renderHand()}
+                </div>
             </div>
         </div>
     );
