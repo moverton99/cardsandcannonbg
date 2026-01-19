@@ -91,13 +91,13 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     const currentPhase = ctx.phase;
 
     React.useEffect(() => {
-        if (G.hasDrawnCard && G.lastDrawnCard && isMyTurn) {
+        if (currentPhase === PHASES.SUPPLY && G.hasDrawnCard && G.lastDrawnCard && isMyTurn) {
             const lastIdx = G.players[effectivePlayerID as PlayerID].hand.findIndex(c => c.id === G.lastDrawnCard?.id);
             if (lastIdx !== -1) {
                 setSelectedCardIndex(lastIdx);
             }
         }
-    }, [G.hasDrawnCard, G.lastDrawnCard, isMyTurn]);
+    }, [G.hasDrawnCard, G.lastDrawnCard, isMyTurn, currentPhase]);
     const me = G.players[effectivePlayerID as PlayerID];
     const handLimitExceeded = me.hand.length > 7;
 
@@ -441,8 +441,8 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     borderRadius: '8px',
                     marginBottom: '0px',
                     minWidth: '150px',
-                    opacity: viewingDiscardPile !== null || (G.lastDrawnCard && isMyTurn) ? 0.5 : 1,
-                    pointerEvents: viewingDiscardPile !== null || (G.lastDrawnCard && isMyTurn) ? 'none' : 'auto'
+                    opacity: viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && G.lastDrawnCard && isMyTurn) ? 0.5 : 1,
+                    pointerEvents: viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && G.lastDrawnCard && isMyTurn) ? 'none' : 'auto'
                 }}>
                     {currentPhase === PHASES.SUPPLY && isMyTurn && (
                         <>
