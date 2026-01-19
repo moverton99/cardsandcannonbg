@@ -52,20 +52,14 @@ const generateDeck = (): Card[] => {
 
 // --- Moves ---
 
-const DrawCard: Move<GameState> = ({ G, playerID, events }) => {
+const DrawCard: Move<GameState> = ({ G, playerID }) => {
     const player = G.players[playerID as PlayerID];
-    if (player.deck.length > 0) {
+    if (player.deck.length > 0 && !G.hasDrawnCard) {
         const card = player.deck.pop()!;
         player.hand.push(card);
+        G.hasDrawnCard = true;
+        G.lastDrawnCard = card;
     }
-};
-
-const CheckHandLimit: Move<GameState> = ({ G, playerID, events }) => {
-    const player = G.players[playerID as PlayerID];
-    if (player.hand.length <= MAX_HAND_SIZE) {
-        events.endPhase();
-    }
-    // If > MAX_HAND_SIZE, the move logic just stops and waits for DiscardCard
 };
 
 const DiscardCard: Move<GameState> = ({ G, playerID }, cardIndex: number) => {
@@ -216,22 +210,26 @@ export const CardsAndCannon: Game<GameState> = {
                 '0': { hand: p0Hand, deck: p0Deck, discardPile: [], breakthroughTokens: 0 },
                 '1': { hand: p1Hand, deck: p1Deck, discardPile: [], breakthroughTokens: 0 },
             },
+            hasDrawnCard: false,
+            lastDrawnCard: null,
         };
     },
 
     phases: {
         [PHASES.SUPPLY]: {
             start: true,
-            onBegin: ({ G, ctx }) => {
-                const player = G.players[ctx.currentPlayer as PlayerID];
-                if (player.deck.length > 0) {
-                    player.hand.push(player.deck.pop()!);
-                }
+            onBegin: ({ G }) => {
+                G.hasDrawnCard = false;
+                G.lastDrawnCard = null;
             },
             turn: {
                 order: TurnOrder.CONTINUE,
             },
-            moves: { CheckHandLimit, DiscardCard },
+            moves: { DrawCard, DiscardCard },
+            endIf: ({ G, ctx }) => {
+                const player = G.players[ctx.currentPlayer as PlayerID];
+                return G.hasDrawnCard && player.hand.length <= MAX_HAND_SIZE;
+            },
             next: PHASES.LOGISTICS,
         },
         [PHASES.LOGISTICS]: {

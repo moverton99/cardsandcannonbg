@@ -57,6 +57,8 @@ export interface GameState {
             breakthroughTokens: number;
         };
     };
+    hasDrawnCard: boolean;
+    lastDrawnCard: Card | null;
 }
 
 export const PHASES = {

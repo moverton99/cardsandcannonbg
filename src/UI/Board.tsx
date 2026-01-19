@@ -84,10 +84,20 @@ const BoardCard: React.FC<{ card: any, isFaceUp: boolean }> = ({ card, isFaceUp 
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+    const [viewingDiscardPile, setViewingDiscardPile] = useState<PlayerID | null>(null);
 
     const effectivePlayerID = playerID || ctx.currentPlayer;
     const isMyTurn = playerID ? (ctx.currentPlayer === playerID) : true;
     const currentPhase = ctx.phase;
+
+    React.useEffect(() => {
+        if (G.hasDrawnCard && G.lastDrawnCard && isMyTurn) {
+            const lastIdx = G.players[effectivePlayerID as PlayerID].hand.findIndex(c => c.id === G.lastDrawnCard?.id);
+            if (lastIdx !== -1) {
+                setSelectedCardIndex(lastIdx);
+            }
+        }
+    }, [G.hasDrawnCard, G.lastDrawnCard, isMyTurn]);
     const me = G.players[effectivePlayerID as PlayerID];
     const handLimitExceeded = me.hand.length > 7;
 
@@ -122,6 +132,126 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} />
                 )}
                 {slot.isOperational && <div style={{ position: 'absolute', bottom: '-15px', color: 'yellow', fontSize: '0.6em' }}>READY</div>}
+            </div>
+        );
+    };
+
+    const renderDeck = (pid: PlayerID) => {
+        const deck = G.players[pid].deck;
+        const topCard = deck.length > 0 ? { type: 'UNIT', id: 'back' } : null; // Dummy for back
+        const canDraw = currentPhase === PHASES.SUPPLY && isMyTurn && pid === effectivePlayerID && !G.hasDrawnCard;
+
+        return (
+            <div
+                onClick={() => canDraw && moves.DrawCard()}
+                style={{
+                    position: 'relative',
+                    width: `${CARD_STYLE.WIDTH}px`,
+                    height: `${CARD_STYLE.HEIGHT}px`,
+                    cursor: canDraw ? 'pointer' : 'default',
+                    transform: canDraw ? 'scale(1.05)' : 'none',
+                    transition: 'transform 0.2s'
+                }}>
+                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.8em', color: canDraw ? 'yellow' : '#666', width: '100%', textAlign: 'center' }}>
+                    {canDraw ? 'CLICK TO DRAW' : 'DECK'}
+                </small>
+                {topCard ? (
+                    <BoardCard card={topCard} isFaceUp={false} />
+                ) : (
+                    <div style={{
+                        border: '2px solid #333',
+                        width: '100%',
+                        height: '100%',
+                        background: '#111',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6em',
+                        color: '#444'
+                    }}>EMPTY</div>
+                )}
+                {canDraw && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        width: '100%',
+                        height: '100%',
+                        border: '2px solid yellow',
+                        borderRadius: '8px',
+                        pointerEvents: 'none',
+                        boxShadow: '0 0 10px yellow',
+                        animation: 'pulse 1.5s infinite'
+                    }} />
+                )}
+                {deck.length > 0 && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-12px',
+                        right: '0',
+                        background: '#333',
+                        color: 'white',
+                        fontSize: '0.6em',
+                        padding: '2px 5px',
+                        borderRadius: '4px',
+                        border: '1px solid #555',
+                        zIndex: 2
+                    }}>
+                        {deck.length}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderDiscardPile = (pid: PlayerID) => {
+        const pile = G.players[pid].discardPile;
+        const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
+
+        return (
+            <div
+                onClick={() => pile.length > 0 && setViewingDiscardPile(pid)}
+                style={{
+                    width: `${CARD_STYLE.WIDTH}px`,
+                    height: `${CARD_STYLE.HEIGHT}px`,
+                    cursor: pile.length > 0 ? 'pointer' : 'default',
+                    position: 'relative',
+                }}
+            >
+                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.8em', color: '#666', width: '100%', textAlign: 'center' }}>DISCARD</small>
+                {topCard ? (
+                    <BoardCard card={topCard} isFaceUp={true} />
+                ) : (
+                    <div style={{
+                        border: '2px solid #333',
+                        width: '100%',
+                        height: '100%',
+                        background: '#111',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6em',
+                        color: '#444'
+                    }}>EMPTY</div>
+                )}
+                {pile.length > 0 && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-12px',
+                        right: '0',
+                        background: '#333',
+                        color: 'white',
+                        fontSize: '0.6em',
+                        padding: '2px 5px',
+                        borderRadius: '4px',
+                        border: '1px solid #555',
+                        zIndex: 2
+                    }}>
+                        {pile.length}
+                    </div>
+                )}
             </div>
         );
     };
@@ -163,9 +293,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 {/* Controls */}
                 {isMyTurn && (
                     <div style={{ marginTop: '10px' }}>
-                        {currentPhase === PHASES.SUPPLY && (
-                            <button onClick={() => moves.CheckHandLimit([])}>Confirm Supply</button>
-                        )}
                         {currentPhase === PHASES.LOGISTICS && (
                             <>
                                 <button onClick={() => handleAdvance(colId)} disabled={isFull}>Adv</button>
@@ -191,8 +318,10 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
     const renderHand = () => {
         const hand = G.players[effectivePlayerID as keyof typeof G.players].hand;
+        const isDisabled = viewingDiscardPile !== null;
+
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
                 <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
                     {hand.map((card, idx) => {
                         const isSelected = selectedCardIndex === idx;
@@ -279,42 +408,123 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 Phase: <strong>{currentPhase}</strong> | Player: <strong>{ctx.currentPlayer}</strong>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-around', marginBottom: '20px', color: '#aaa', fontSize: '0.8em' }}>
-                    <div>Deck: {me.deck.length} | Discards: {me.discardPile.length}</div>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '40px', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {COLUMNS.map(id => renderColumn(id))}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '15px', marginTop: '20px' }}>
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        padding: '10px',
-                        background: '#333',
-                        borderRadius: '8px',
-                        marginBottom: '0px',
-                        minWidth: '150px'
-                    }}>
-                        {currentPhase === PHASES.SUPPLY && isMyTurn && (
-                            <>
-                                {handLimitExceeded ? (
-                                    <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
-                                        Discard required: {me.hand.length - 7}
-                                    </div>
-                                ) : (
-                                    <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.CheckHandLimit([])}>Confirm Hand</button>
-                                )}
-                            </>
-                        )}
-                        {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
-                        {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
-                        {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+
+                {/* SIDELOAD UI (Decks and Discards) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
+                    {/* Player 1 Sideload */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '0.7em', color: 'red', fontWeight: 'bold' }}>P1 ASSETS</div>
+                        {renderDeck('1')}
+                        {renderDiscardPile('1')}
                     </div>
-                    {renderHand()}
+
+                    {/* Player 0 Sideload */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '0.7em', color: 'blue', fontWeight: 'bold' }}>P0 ASSETS</div>
+                        {renderDiscardPile('0')}
+                        {renderDeck('0')}
+                    </div>
                 </div>
             </div>
+
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '15px', marginTop: '20px' }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '10px',
+                    background: '#333',
+                    borderRadius: '8px',
+                    marginBottom: '0px',
+                    minWidth: '150px',
+                    opacity: viewingDiscardPile !== null || (G.lastDrawnCard && isMyTurn) ? 0.5 : 1,
+                    pointerEvents: viewingDiscardPile !== null || (G.lastDrawnCard && isMyTurn) ? 'none' : 'auto'
+                }}>
+                    {currentPhase === PHASES.SUPPLY && isMyTurn && (
+                        <>
+                            {!G.hasDrawnCard ? (
+                                <div style={{ color: 'yellow', fontSize: '0.9em', fontWeight: 'bold', animation: 'flash 1s infinite alternate' }}>
+                                    DRAW A CARD
+                                </div>
+                            ) : (
+                                <>
+                                    {handLimitExceeded && (
+                                        <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
+                                            Discard required: {me.hand.length - 7}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
+                    )}
+                    {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
+                    {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
+                    {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+                </div>
+                {renderHand()}
+            </div>
+
+            {/* Discard Carousel Popup */}
+            {viewingDiscardPile !== null && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.9)',
+                    zIndex: 1000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}>
+                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                        <h2 style={{ color: 'white' }}>Player {viewingDiscardPile} Discard Pile</h2>
+                        <button
+                            onClick={() => setViewingDiscardPile(null)}
+                            style={{ padding: '10px 30px', background: '#444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            CLOSE
+                        </button>
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '15px',
+                        overflowX: 'auto',
+                        padding: '40px',
+                        maxWidth: '90%',
+                        background: '#222',
+                        borderRadius: '15px',
+                        border: '1px solid #444'
+                    }}>
+                        {G.players[viewingDiscardPile].discardPile.map((card, i) => (
+                            <div key={i} style={{ flexShrink: 0 }}>
+                                <BoardCard card={card} isFaceUp={true} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {/* Last Drawn Card Popup Removed - Now handled in Hand */}
+
+            <style>{`
+                @keyframes pulse {
+                    0% { opacity: 0.5; box-shadow: 0 0 5px yellow; }
+                    50% { opacity: 1; box-shadow: 0 0 20px yellow; }
+                    100% { opacity: 0.5; box-shadow: 0 0 5px yellow; }
+                }
+                @keyframes flash {
+                    from { opacity: 0.5; }
+                    to { opacity: 1; }
+                }
+            `}</style>
         </div>
     );
 };
