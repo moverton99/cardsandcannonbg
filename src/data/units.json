@@ -41,6 +41,6 @@
         "weight": "Heavy",
         "activate": null,
         "primary": "DESTROY_OR_FORCE_WITHDRAW",
-        "description": "Primary: Destroy the enemy asset at this Front OR force the opponent to Withdraw it to their hand."
+        "description": "Primary: Attack a unit at the front. Destroy the unit unless the defender withdraws."
     }
 }

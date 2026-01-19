@@ -60,16 +60,16 @@ const DrawCard: Move<GameState> = ({ G, playerID, events }) => {
     }
 };
 
-const CheckHandLimit: Move<GameState> = ({ G, playerID, events }, discards: number[]) => {
+const CheckHandLimit: Move<GameState> = ({ G, playerID, events }) => {
     const player = G.players[playerID as PlayerID];
     while (player.hand.length > MAX_HAND_SIZE) {
         player.hand.pop();
     }
-    events.endTurn();
+    events.endPhase();
 };
 
 const Pass: Move<GameState> = ({ events }) => {
-    events.endTurn();
+    events.endPhase();
 };
 
 
@@ -91,7 +91,7 @@ const PlayEvent: Move<GameState> = ({ G, playerID, events }, cardIndex: number) 
     // Since it's free, we DO NOT call events.endPhase() or increment moves.
 };
 
-const Advance: Move<GameState> = ({ G, playerID }, columnId: string) => {
+const Advance: Move<GameState> = ({ G, playerID, events }, columnId: string) => {
     const col = G.columns[columnId as keyof typeof G.columns];
     const pCol = col.players[playerID as PlayerID];
 
@@ -115,9 +115,10 @@ const Advance: Move<GameState> = ({ G, playerID }, columnId: string) => {
     }
 
     if (!moved) return INVALID_MOVE;
+    events.endPhase();
 };
 
-const Withdraw: Move<GameState> = ({ G, playerID }, columnId: string) => {
+const Withdraw: Move<GameState> = ({ G, playerID, events }, columnId: string) => {
     const col = G.columns[columnId as keyof typeof G.columns];
     const pCol = col.players[playerID as PlayerID];
 
@@ -126,28 +127,44 @@ const Withdraw: Move<GameState> = ({ G, playerID }, columnId: string) => {
     const card = pCol.front.card!;
     G.players[playerID as PlayerID].hand.push(card);
     pCol.front = createSlot();
+    events.endPhase();
 };
 
 const Ship: Move<GameState> = ({ G, playerID, events }, columnId: string, cardIndex: number) => {
     const col = G.columns[columnId as keyof typeof G.columns];
     const pCol = col.players[playerID as PlayerID];
 
-    if (pCol.rear.status === 'OCCUPIED') return INVALID_MOVE;
+    // Check if column is full
+    const isFull = pCol.front.status === 'OCCUPIED' &&
+        pCol.reserve.status === 'OCCUPIED' &&
+        pCol.rear.status === 'OCCUPIED';
+
+    if (isFull) return INVALID_MOVE;
 
     const player = G.players[playerID as PlayerID];
     const card = player.hand[cardIndex];
 
-    if (!card) return INVALID_MOVE;
+    if (!card || card.type !== 'UNIT') return INVALID_MOVE;
 
-    if (card.type !== 'UNIT') return INVALID_MOVE;
+    // Push Logic: If Rear is occupied, push Rear to Reserve. 
+    // If Reserve was also occupied, push Reserve to Front.
+    if (pCol.rear.status === 'OCCUPIED') {
+        if (pCol.reserve.status === 'OCCUPIED') {
+            // Since it's not full, Front must be empty
+            pCol.front = { ...pCol.reserve };
+        }
+        pCol.reserve = { ...pCol.rear };
+    }
 
     pCol.rear.status = 'OCCUPIED';
     pCol.rear.card = card;
     pCol.rear.isFaceUp = false;
+    pCol.rear.isOperational = false;
 
     player.hand.splice(cardIndex, 1);
 
-    events.endTurn(); // Commitment is single action then end turn
+    events.endTurn();
+    events.endPhase();
 };
 
 const PrimaryAction: Move<GameState> = ({ G, playerID }, columnId: string) => {
@@ -197,70 +214,68 @@ export const CardsAndCannon: Game<GameState> = {
     phases: {
         [PHASES.SUPPLY]: {
             start: true,
+            onBegin: ({ G, ctx }) => {
+                const player = G.players[ctx.currentPlayer as PlayerID];
+                if (player.deck.length > 0) {
+                    player.hand.push(player.deck.pop()!);
+                }
+            },
             turn: {
-                order: TurnOrder.ONCE,
-                onBegin: ({ G, ctx }) => {
-                    const player = G.players[ctx.currentPlayer as PlayerID];
-                    if (player.deck.length > 0) {
-                        player.hand.push(player.deck.pop()!);
-                    }
-                },
-                minMoves: 1,
-                maxMoves: 1,
+                order: TurnOrder.CONTINUE,
             },
             moves: { CheckHandLimit },
             next: PHASES.LOGISTICS,
         },
         [PHASES.LOGISTICS]: {
             turn: {
-                order: TurnOrder.ONCE,
-                minMoves: 1,
-                maxMoves: 1,
+                order: TurnOrder.CONTINUE,
             },
             moves: { Advance, Withdraw, Pass, PlayEvent },
             next: PHASES.ARRIVAL,
         },
         [PHASES.ARRIVAL]: {
-            onBegin: ({ G }) => {
-                // Logic: Scan front slots. If newly arrived (facedown), Reveal (Exposed) and Activate.
+            onBegin: ({ G, ctx }) => {
+                // Logic: Scan current player's front slots. If newly arrived (facedown), Reveal (Exposed).
                 COLUMNS.forEach(colId => {
                     const col = G.columns[colId as keyof typeof G.columns];
-                    ['0', '1'].forEach(pid => {
-                        const pCol = col.players[pid as PlayerID];
-                        if (pCol.front.status === 'OCCUPIED' && !pCol.front.isFaceUp) {
-                            pCol.front.isFaceUp = true;
-                            // Trigger Activate ability here
-                        }
-                    })
+                    const pCol = col.players[ctx.currentPlayer as PlayerID];
+                    if (pCol.front.status === 'OCCUPIED' && !pCol.front.isFaceUp) {
+                        pCol.front.isFaceUp = true;
+                        // Trigger Activate ability here
+                    }
                 })
             },
-            // No player moves in Arrival usually, it's automatic.
-            // Assuming auto-transition for now or a "Done" move
+            endIf: () => true,
             next: PHASES.ENGAGEMENT,
         },
         [PHASES.ENGAGEMENT]: {
-            onBegin: ({ G }) => {
-                // Readying: Exposed -> Operational
+            onBegin: ({ G, ctx }) => {
+                // Readying: Exposed -> Operational for current player
                 COLUMNS.forEach(colId => {
                     const col = G.columns[colId as keyof typeof G.columns];
-                    ['0', '1'].forEach(pid => {
-                        const pCol = col.players[pid as PlayerID];
-                        if (pCol.front.status === 'OCCUPIED' && pCol.front.isFaceUp) {
-                            pCol.front.isOperational = true;
-                        }
-                    })
+                    const pCol = col.players[ctx.currentPlayer as PlayerID];
+                    if (pCol.front.status === 'OCCUPIED' && pCol.front.isFaceUp) {
+                        pCol.front.isOperational = true;
+                    }
                 })
             },
-            moves: { PrimaryAction },
+            turn: {
+                order: TurnOrder.CONTINUE,
+            },
+            moves: { PrimaryAction, Pass },
             next: PHASES.COMMITMENT,
         },
         [PHASES.COMMITMENT]: {
             turn: {
-                order: TurnOrder.ONCE,
-                minMoves: 1,
-                maxMoves: 1,
+                order: TurnOrder.CONTINUE,
             },
-            moves: { Ship, Pass },
+            moves: {
+                Ship,
+                Pass: ({ events }) => {
+                    events.endTurn();
+                    events.endPhase();
+                }
+            },
             next: PHASES.SUPPLY, // Loop back
         },
     },

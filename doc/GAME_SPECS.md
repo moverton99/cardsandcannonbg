@@ -18,13 +18,13 @@ Exposed Status: The unit has entered the Front but is not yet Operational (face-
 Operational Status: The unit is readied and can perform Primary Actions or control the Front.
 
 3. The Phase Machine (Turn Structure)
-Every turn must proceed through these five phases in order:
+Players take turns.  Each player goes through all phases of their turn in order and then control passes to the next player.  Every turn proceeded through these phases in order:
 
 Supply Phase:
 
 Draw: Active player draws 1 card.
 
-Hand Check: Strictly enforce a 7-card hand limit. Discard down immediately if over.
+Hand Check: If the player has more than 7 cards in hand, they must discard until they have exactly 7 cards.
 
 Logistics Phase:
 
@@ -32,7 +32,7 @@ Column Action: Choose ONE Column to perform either an Advance or a Withdraw.
 
 Advance: Move assets forward if the slot ahead is empty (Reserve to Front first, then Rear to Reserve).
 
-Withdraw: Return an Exposed or Operational asset from the Front to your hand.
+Withdraw: Return any asset from the Front to your hand.
 
 Events: Event cards may be played for free and do not count as the Column action.
 
@@ -58,7 +58,7 @@ Victory Momentum: If a Breakthrough token is earned during this phase, draw 1 ca
 
 Commitment Phase (Deploy):
 
-Ship: Player MUST place 1 card from their hand face-down into any empty Rear (Depot) slot on the board.
+Ship: Player MAY place 1 card from their hand face-down into any empty Rear (Depot) slot on the board.
 
 4. Key Mechanics & Special Rules
 Overrun (Passive): If a Front slot is cleared (destroyed or withdrawn), the asset in that Column's Reserve immediately moves into the Front. It becomes Exposed, but does not trigger "Activate" abilities.

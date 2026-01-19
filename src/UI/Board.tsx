@@ -134,6 +134,8 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         const p1 = col.players['1'];
         // P0 Pipeline
         const p0 = col.players['0'];
+        const myCol = col.players[effectivePlayerID as PlayerID];
+        const isFull = myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'OCCUPIED';
 
         return (
             <div key={colId} style={{ display: 'flex', flexDirection: 'column', margin: '0 10px', alignItems: 'center' }}>
@@ -164,7 +166,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         )}
                         {currentPhase === PHASES.LOGISTICS && (
                             <>
-                                <button onClick={() => handleAdvance(colId)}>Adv</button>
+                                <button onClick={() => handleAdvance(colId)} disabled={isFull}>Adv</button>
                                 <button onClick={() => moves.Pass()}>Pass</button>
                             </>
                         )}
@@ -177,7 +179,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                             ) : null
                         )}
                         {currentPhase === PHASES.COMMITMENT && (
-                            <button onClick={() => handleShip(colId)} disabled={selectedCardIndex === null}>Ship</button>
+                            <button onClick={() => handleShip(colId)} disabled={selectedCardIndex === null || isFull}>Ship</button>
                         )}
                     </div>
                 )}
