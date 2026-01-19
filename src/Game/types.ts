@@ -1,9 +1,24 @@
 export type PlayerID = '0' | '1';
 
-export interface Card {
-    id: string;
-    unitId: string; // Key from units.json
+// Derived from data files
+export type UnitId = 'scout' | 'skirmishers' | 'line_infantry' | 'trench_raiders' | 'artillery_battery' | 'heavy_cannon';
+export type EventId = 'forced_march' | 'supply_drop' | 'industrial_sabotage' | 'rapid_deployment' | 'battlefield_recon' | 'munitions_reserve';
+
+export interface BaseCard {
+    id: string; // Unique instance ID
 }
+
+export interface UnitCard extends BaseCard {
+    type: 'UNIT';
+    unitId: UnitId;
+}
+
+export interface EventCard extends BaseCard {
+    type: 'EVENT';
+    eventId: EventId;
+}
+
+export type Card = UnitCard | EventCard;
 
 export type SlotStatus = 'EMPTY' | 'OCCUPIED';
 

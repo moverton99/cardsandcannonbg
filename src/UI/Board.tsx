@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { BoardProps } from 'boardgame.io/react';
-import { GameState, Slot, COLUMNS, PHASES } from '../Game/types';
+import { GameState, Slot, COLUMNS, PHASES, PlayerID } from '../Game/types';
 
 interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
-export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID }) => {
+export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
     const isMyTurn = ctx.currentPlayer === playerID;
@@ -36,7 +36,9 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
             }}>
                 <small>{label}</small>
                 {slot.status === 'OCCUPIED' && (
-                    <div>{slot.isFaceUp ? slot.card?.unitId : 'Back'}</div>
+                    <div>{slot.isFaceUp ?
+                        (slot.card?.type === 'UNIT' ? slot.card.unitId : 'Event?')
+                        : 'Back'}</div>
                 )}
                 {slot.isOperational && <div style={{ color: 'yellow' }}>Ready</div>}
             </div>
@@ -78,11 +80,22 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 {/* Controls */}
                 {isMyTurn && (
                     <div style={{ marginTop: '10px' }}>
+                        {currentPhase === PHASES.SUPPLY && (
+                            <button onClick={() => moves.CheckHandLimit([])}>Confirm Supply</button>
+                        )}
                         {currentPhase === PHASES.LOGISTICS && (
                             <>
                                 <button onClick={() => handleAdvance(colId)}>Adv</button>
                                 <button onClick={() => moves.Pass()}>Pass</button>
                             </>
+                        )}
+                        {currentPhase === PHASES.LOGISTICS && selectedCardIndex !== null && (
+                            G.players[playerID as PlayerID].hand[selectedCardIndex].type === 'EVENT' ? (
+                                <button onClick={() => {
+                                    moves.PlayEvent(selectedCardIndex);
+                                    setSelectedCardIndex(null);
+                                }}>Play Event</button>
+                            ) : null
                         )}
                         {currentPhase === PHASES.COMMITMENT && (
                             <button onClick={() => handleShip(colId)} disabled={selectedCardIndex === null}>Ship</button>
@@ -107,10 +120,10 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                             margin: '5px',
                             padding: '10px',
                             cursor: 'pointer',
-                            background: '#444'
+                            background: card.type === 'EVENT' ? '#552255' : '#444'
                         }}
                     >
-                        {card.unitId}
+                        {card.type === 'UNIT' ? card.unitId : card.eventId}
                     </div>
                 ))}
             </div>

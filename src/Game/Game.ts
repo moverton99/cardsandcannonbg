@@ -1,9 +1,10 @@
 import { Game, Move } from 'boardgame.io';
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { GameState, PHASES, COLUMNS, PlayerID, Card, Slot } from './types';
-import unitData from '../data/units.json';
+import { GameState, PHASES, COLUMNS, PlayerID, Card, Slot, UnitId, EventId } from './types';
 
-const MAX_HAND_SIZE = 7;
+import deckData from '../data/deck.json';
+
+const MAX_HAND_SIZE = deckData.deck.hand_limit;
 
 // --- Helper Functions ---
 
@@ -17,12 +18,35 @@ const createSlot = (): Slot => ({
 
 const generateDeck = (): Card[] => {
     const deck: Card[] = [];
-    const units = Object.keys(unitData);
-    // Create a deck of 20 random cards for now
-    for (let i = 0; i < 20; i++) {
-        const unitId = units[Math.floor(Math.random() * units.length)];
-        deck.push({ id: `card_${i}_${Math.random().toString(36).substr(2, 9)}`, unitId });
+
+    // Add Units
+    Object.entries(deckData.deck.composition.units).forEach(([id, count]) => {
+        for (let i = 0; i < count; i++) {
+            deck.push({
+                id: `unit_${id}_${Math.random().toString(36).substr(2, 9)}`,
+                type: 'UNIT',
+                unitId: id as UnitId
+            });
+        }
+    });
+
+    // Add Events
+    Object.entries(deckData.deck.composition.events).forEach(([id, count]) => {
+        for (let i = 0; i < count; i++) {
+            deck.push({
+                id: `event_${id}_${Math.random().toString(36).substr(2, 9)}`,
+                type: 'EVENT',
+                eventId: id as EventId
+            });
+        }
+    });
+
+    // Shuffle (Fisher-Yates)
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
     }
+
     return deck;
 };
 
@@ -53,6 +77,23 @@ const Pass: Move<GameState> = ({ events }) => {
 };
 
 
+
+
+const PlayEvent: Move<GameState> = ({ G, playerID, events }, cardIndex: number) => {
+    const player = G.players[playerID as PlayerID];
+    const card = player.hand[cardIndex];
+
+    if (!card || card.type !== 'EVENT') return INVALID_MOVE;
+
+    console.log(`Player ${playerID} played event: ${card.eventId}`);
+
+    // Remove from hand
+    player.hand.splice(cardIndex, 1);
+
+    // TODO: Implement actual event logic based on card.eventId
+    // For now, it's just a free action that consumes the card.
+    // Since it's free, we DO NOT call events.endPhase() or increment moves.
+};
 
 const Advance: Move<GameState> = ({ G, playerID }, columnId: string) => {
     const col = G.columns[columnId as keyof typeof G.columns];
@@ -101,6 +142,8 @@ const Ship: Move<GameState> = ({ G, playerID, events }, columnId: string, cardIn
     const card = player.hand[cardIndex];
 
     if (!card) return INVALID_MOVE;
+
+    if (card.type !== 'UNIT') return INVALID_MOVE;
 
     pCol.rear.status = 'OCCUPIED';
     pCol.rear.card = card;
@@ -161,7 +204,7 @@ export const CardsAndCannon: Game<GameState> = {
             next: PHASES.LOGISTICS,
         },
         [PHASES.LOGISTICS]: {
-            moves: { Advance, Withdraw, Pass },
+            moves: { Advance, Withdraw, Pass, PlayEvent },
             turn: {
                 minMoves: 1,
                 maxMoves: 1,

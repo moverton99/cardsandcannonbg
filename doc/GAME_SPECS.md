@@ -74,7 +74,13 @@ Heavy: Powerful units that can trigger "Escalation."
 5. Unit Data
 All specific card stats, abilities, and weights are defined in src/data/units.json. The engine should reference that file for all Primary and Activation logic.
 
-6. Win Conditions
+6. Event Data
+All specific event stats, abilities, and weights are defined in src/data/events.json. The engine should reference that file for all Event logic.
+
+7. Deck Data
+All specific deck stats, abilities, and weights are defined in src/data/deck.json. The engine should reference that file for all Deck logic.
+
+8. Win Conditions
 A player wins immediately if they satisfy any of the following:
 
 Front Control: Control 2 Fronts simultaneously at the end of their turn (Player has an Operational asset; opponent has none).
