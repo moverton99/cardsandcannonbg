@@ -62,10 +62,18 @@ const DrawCard: Move<GameState> = ({ G, playerID, events }) => {
 
 const CheckHandLimit: Move<GameState> = ({ G, playerID, events }) => {
     const player = G.players[playerID as PlayerID];
-    while (player.hand.length > MAX_HAND_SIZE) {
-        player.hand.pop();
+    if (player.hand.length <= MAX_HAND_SIZE) {
+        events.endPhase();
     }
-    events.endPhase();
+    // If > MAX_HAND_SIZE, the move logic just stops and waits for DiscardCard
+};
+
+const DiscardCard: Move<GameState> = ({ G, playerID }, cardIndex: number) => {
+    const player = G.players[playerID as PlayerID];
+    if (cardIndex < 0 || cardIndex >= player.hand.length) return INVALID_MOVE;
+
+    const [card] = player.hand.splice(cardIndex, 1);
+    player.discardPile.push(card);
 };
 
 const Pass: Move<GameState> = ({ events }) => {
@@ -205,8 +213,8 @@ export const CardsAndCannon: Game<GameState> = {
         return {
             columns,
             players: {
-                '0': { hand: p0Hand, deck: p0Deck, breakthroughTokens: 0 },
-                '1': { hand: p1Hand, deck: p1Deck, breakthroughTokens: 0 },
+                '0': { hand: p0Hand, deck: p0Deck, discardPile: [], breakthroughTokens: 0 },
+                '1': { hand: p1Hand, deck: p1Deck, discardPile: [], breakthroughTokens: 0 },
             },
         };
     },
@@ -223,7 +231,7 @@ export const CardsAndCannon: Game<GameState> = {
             turn: {
                 order: TurnOrder.CONTINUE,
             },
-            moves: { CheckHandLimit },
+            moves: { CheckHandLimit, DiscardCard },
             next: PHASES.LOGISTICS,
         },
         [PHASES.LOGISTICS]: {

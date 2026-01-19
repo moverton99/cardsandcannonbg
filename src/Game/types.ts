@@ -53,6 +53,7 @@ export interface GameState {
         [key in PlayerID]: {
             hand: Card[];
             deck: Card[];
+            discardPile: Card[];
             breakthroughTokens: number;
         };
     };

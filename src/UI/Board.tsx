@@ -88,6 +88,8 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     const effectivePlayerID = playerID || ctx.currentPlayer;
     const isMyTurn = playerID ? (ctx.currentPlayer === playerID) : true;
     const currentPhase = ctx.phase;
+    const me = G.players[effectivePlayerID as PlayerID];
+    const handLimitExceeded = me.hand.length > 7;
 
     const handleAdvance = (colId: string) => {
         moves.Advance(colId);
@@ -190,63 +192,81 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     const renderHand = () => {
         const hand = G.players[effectivePlayerID as keyof typeof G.players].hand;
         return (
-            <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
-                {hand.map((card, idx) => {
-                    const isSelected = selectedCardIndex === idx;
-                    const details = card.type === 'UNIT' ? (unitData as any)[card.unitId] : (eventData as any)[card.eventId];
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
+                    {hand.map((card, idx) => {
+                        const isSelected = selectedCardIndex === idx;
+                        const details = card.type === 'UNIT' ? (unitData as any)[card.unitId] : (eventData as any)[card.eventId];
 
-                    return (
-                        <div
-                            key={card.id}
-                            onClick={() => setSelectedCardIndex(idx)}
-                            style={{
-                                border: isSelected ? '3px solid yellow' : '1px solid #777',
-                                margin: `0 ${CARD_STYLE.GAP / 2}px`,
-                                padding: isSelected ? '15px' : '10px',
-                                cursor: 'pointer',
-                                background: card.type === 'EVENT' ? '#552255' : '#444',
-                                width: isSelected ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
-                                height: isSelected ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: isSelected ? 'flex-start' : 'center',
-                                transition: 'all 0.2s ease-in-out',
-                                transform: isSelected ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
-                                boxShadow: isSelected ? '0 5px 15px rgba(255,255,0,0.3)' : 'none',
-                                borderRadius: '8px',
-                                position: 'relative',
-                                zIndex: isSelected ? 10 : 1,
-                                textAlign: 'center'
-                            }}
-                        >
-                            <div style={{ fontSize: isSelected ? '0.9em' : '0.8em', fontWeight: 'bold', marginBottom: isSelected ? '5px' : '0' }}>
-                                {details?.name || (card.type === 'UNIT' ? card.unitId : card.eventId)}
-                            </div>
-                            <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: isSelected ? '10px' : '0' }}>
-                                {card.type} {card.type === 'UNIT' && isSelected ? `(${details.weight})` : ''}
-                            </div>
-
-                            {isSelected && (
-                                <div style={{ width: '100%', textAlign: 'left', overflow: 'hidden' }}>
-                                    {card.type === 'UNIT' && details.activate && (
-                                        <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                            <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
-                                        </div>
-                                    )}
-                                    {card.type === 'UNIT' && details.primary && (
-                                        <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                            <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
-                                        </div>
-                                    )}
-                                    <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
-                                        {details.description}
-                                    </p>
+                        return (
+                            <div
+                                key={card.id}
+                                onClick={() => setSelectedCardIndex(idx)}
+                                style={{
+                                    border: isSelected ? '3px solid yellow' : '1px solid #777',
+                                    margin: `0 ${CARD_STYLE.GAP / 2}px`,
+                                    padding: isSelected ? '15px' : '10px',
+                                    cursor: 'pointer',
+                                    background: card.type === 'EVENT' ? '#552255' : '#444',
+                                    width: isSelected ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
+                                    height: isSelected ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: isSelected ? 'flex-start' : 'center',
+                                    transition: 'all 0.2s ease-in-out',
+                                    transform: isSelected ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
+                                    boxShadow: isSelected ? '0 5px 15px rgba(255,255,0,0.3)' : 'none',
+                                    borderRadius: '8px',
+                                    position: 'relative',
+                                    zIndex: isSelected ? 10 : 1,
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <div style={{ fontSize: isSelected ? '0.9em' : '0.8em', fontWeight: 'bold', marginBottom: isSelected ? '5px' : '0' }}>
+                                    {details?.name || (card.type === 'UNIT' ? card.unitId : card.eventId)}
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
+                                <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: isSelected ? '10px' : '0' }}>
+                                    {card.type} {card.type === 'UNIT' && isSelected ? `(${details.weight})` : ''}
+                                </div>
+
+                                {isSelected && (
+                                    <div style={{ width: '100%', textAlign: 'left', overflow: 'hidden' }}>
+                                        {card.type === 'UNIT' && details.activate && (
+                                            <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
+                                                <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
+                                            </div>
+                                        )}
+                                        {card.type === 'UNIT' && details.primary && (
+                                            <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
+                                                <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
+                                            </div>
+                                        )}
+                                        <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
+                                            {details.description}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                {handLimitExceeded && isMyTurn && currentPhase === PHASES.SUPPLY && (
+                    <div style={{ marginTop: '10px' }}>
+                        <button
+                            disabled={selectedCardIndex === null}
+                            onClick={() => {
+                                if (selectedCardIndex !== null) {
+                                    moves.DiscardCard(selectedCardIndex);
+                                    setSelectedCardIndex(null);
+                                }
+                            }}
+                            style={{ padding: '10px 20px', background: '#aa0000', color: 'white', borderRadius: '5px', cursor: selectedCardIndex === null ? 'not-allowed' : 'pointer' }}
+                        >
+                            Confirm Discard Selection
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };
@@ -260,6 +280,9 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-around', marginBottom: '20px', color: '#aaa', fontSize: '0.8em' }}>
+                    <div>Deck: {me.deck.length} | Discards: {me.discardPile.length}</div>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {COLUMNS.map(id => renderColumn(id))}
                 </div>
@@ -271,11 +294,23 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         padding: '10px',
                         background: '#333',
                         borderRadius: '8px',
-                        marginBottom: '0px'
+                        marginBottom: '0px',
+                        minWidth: '150px'
                     }}>
-                        {currentPhase === PHASES.SUPPLY && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.CheckHandLimit([])}>Confirm Hand</button>}
+                        {currentPhase === PHASES.SUPPLY && isMyTurn && (
+                            <>
+                                {handLimitExceeded ? (
+                                    <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
+                                        Discard required: {me.hand.length - 7}
+                                    </div>
+                                ) : (
+                                    <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.CheckHandLimit([])}>Confirm Hand</button>
+                                )}
+                            </>
+                        )}
                         {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
                         {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
+                        {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
                     </div>
                     {renderHand()}
                 </div>
