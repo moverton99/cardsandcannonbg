@@ -182,11 +182,18 @@ export const CardsAndCannon: Game<GameState> = {
             };
         });
 
+        const p0Deck = generateDeck();
+        const p1Deck = generateDeck();
+        const STARTING_HAND_SIZE = deckData.deck.starting_hand_size;
+
+        const p0Hand = p0Deck.splice(-STARTING_HAND_SIZE);
+        const p1Hand = p1Deck.splice(-STARTING_HAND_SIZE);
+
         return {
             columns,
             players: {
-                '0': { hand: [], deck: generateDeck(), breakthroughTokens: 0 },
-                '1': { hand: [], deck: generateDeck(), breakthroughTokens: 0 },
+                '0': { hand: p0Hand, deck: p0Deck, breakthroughTokens: 0 },
+                '1': { hand: p1Hand, deck: p1Deck, breakthroughTokens: 0 },
             },
         };
     },
