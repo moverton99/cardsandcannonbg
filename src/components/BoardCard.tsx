@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { CARD_STYLE } from '../UI/styles';
 import { getCardDetails } from '../UI/cardDetails';
+import { Card } from '../Game/types';
 
 export interface BoardCardProps {
-    card: any;
+    card: Card;
     isFaceUp: boolean;
     selected?: boolean;
     onClick?: () => void;

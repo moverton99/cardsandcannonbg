@@ -1,10 +1,10 @@
 import React from 'react';
 import { BoardCard } from './BoardCard';
 import { CARD_STYLE } from '../UI/styles';
-import { PHASES } from '../Game/types';
+import { PHASES, Card } from '../Game/types';
 
 interface HandProps {
-    hand: any[];
+    hand: Card[];
     selectedCardIndex: number | null;
     onSelectCard: (idx: number) => void;
     handLimitExceeded: boolean;

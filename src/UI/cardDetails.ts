@@ -1,12 +1,13 @@
-import unitData from '../data/units.json';
-import eventData from '../data/events.json';
+import units from '../data/units.json';
+import events from '../data/events.json';
+import { Card } from '../Game/types';
 
-export function getCardDetails(card: any): any {
+export const getCardDetails = (card: Card): any => {
     if (!card) return null;
     if (card.type === 'UNIT') {
-        return (unitData as any)[card.unitId];
+        return (units as any)[card.unitId];
     } else if (card.type === 'EVENT') {
-        return (eventData as any)[card.eventId];
+        return (events as any)[card.eventId];
     }
     return null;
 }

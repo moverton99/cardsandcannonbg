@@ -1,9 +1,10 @@
 import React from 'react';
 import { BoardCard } from './BoardCard';
+import { Card } from '../Game/types';
 
 interface DiscardOverlayProps {
     pid: string;
-    pile: any[];
+    pile: Card[];
     onClose: () => void;
 }
 

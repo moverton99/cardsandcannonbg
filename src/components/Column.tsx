@@ -1,16 +1,16 @@
 import React from 'react';
 import { BoardCard } from './BoardCard';
 import { CARD_STYLE } from '../UI/styles';
-import { Slot, PHASES, PlayerID } from '../Game/types';
+import { Slot, PHASES, PlayerID, Column as GameColumn, Card } from '../Game/types';
 
 interface ColumnProps {
     colId: string;
-    col: any;
+    col: GameColumn;
     currentPhase: string;
     isMyTurn: boolean;
     effectivePlayerID: PlayerID;
     selectedCardIndex: number | null;
-    hand: any[];
+    hand: Card[];
     onAdvance: (colId: string) => void;
     onShip: (colId: string) => void;
     onPassLogistics: () => void;

@@ -1,9 +1,10 @@
 import React from 'react';
 import { BoardCard } from './BoardCard';
 import { CARD_STYLE, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from '../UI/styles';
+import { Card } from '../Game/types';
 
 interface DiscardPileProps {
-    pile: any[];
+    pile: Card[];
     pid: string;
     onOpen: (pid: string) => void;
 }
