@@ -290,13 +290,31 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
                 {/* Controls */}
                 {isMyTurn && (
-                    <div style={{ marginTop: '10px' }}>
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                         {currentPhase === PHASES.LOGISTICS && (
-                            <>
-                                <button onClick={() => handleAdvance(colId)} disabled={isFull}>Adv</button>
-                                <button onClick={() => moves.Pass()}>Pass</button>
-                            </>
+                            <button onClick={() => handleAdvance(colId)} disabled={isFull}>Adv</button>
                         )}
+
+                        {currentPhase === PHASES.LOGISTICS && colId === 'center' && (
+                            <button
+                                onClick={() => moves.Pass()}
+                                style={{
+                                    marginTop: '10px',
+                                    padding: '8px 25px',
+                                    background: '#444',
+                                    color: 'white',
+                                    border: '1px solid #666',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.8em',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                PASS LOGISTICS
+                            </button>
+                        )}
+
                         {currentPhase === PHASES.LOGISTICS && selectedCardIndex !== null && (
                             G.players[effectivePlayerID as PlayerID].hand[selectedCardIndex]?.type === 'EVENT' ? (
                                 <button onClick={() => {
