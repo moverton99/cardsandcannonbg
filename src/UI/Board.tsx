@@ -2,77 +2,14 @@ import React, { useState } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { GameState, Slot, COLUMNS, PHASES, PlayerID } from '../Game/types';
 import { CARD_STYLE, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from './styles';
-import { getCardDetails } from './cardDetails';
+
+import { BoardCard } from '../components/BoardCard';
 
 interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
 
 
-const BoardCard: React.FC<{ card: any, isFaceUp: boolean }> = ({ card, isFaceUp }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const details = getCardDetails(card);
 
-    const style: React.CSSProperties = {
-        width: isHovered ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
-        height: isHovered ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
-        background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#554444',
-        border: isHovered ? '3px solid yellow' : '1px solid #777',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: isHovered ? 'flex-start' : 'center',
-        transition: 'all 0.2s ease-in-out',
-        cursor: 'pointer',
-        position: isHovered ? 'absolute' : 'relative',
-        zIndex: isHovered ? 100 : 1,
-        textAlign: 'center',
-        padding: isHovered ? '15px' : '10px',
-        boxShadow: isHovered ? '0 10px 25px rgba(0,0,0,0.8)' : 'none',
-        transform: isHovered ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
-        overflow: 'hidden',
-    };
-
-    return (
-        <div
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={style}
-        >
-            {!isFaceUp ? (
-                <div style={{ fontWeight: 'bold' }}>BACK</div>
-            ) : (
-                <>
-                    <div style={{ fontSize: isHovered ? '0.9em' : '0.7em', fontWeight: 'bold', marginBottom: isHovered ? '5px' : '0' }}>
-                        {details?.name || 'Unit'}
-                    </div>
-                    {isHovered ? (
-                        <div style={{ width: '100%', textAlign: 'left' }}>
-                            <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: '10px' }}>
-                                {card.type} ({details?.weight})
-                            </div>
-                            {card.type === 'UNIT' && details?.activate && (
-                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                    <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
-                                </div>
-                            )}
-                            {card.type === 'UNIT' && details?.primary && (
-                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                    <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
-                                </div>
-                            )}
-                            <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
-                                {details?.description}
-                            </p>
-                        </div>
-                    ) : (
-                        <div style={{ fontSize: '0.5em', opacity: 0.7 }}>{card.type}</div>
-                    )}
-                </>
-            )}
-        </div>
-    );
-};
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -289,57 +226,16 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
                     {hand.map((card, idx) => {
                         const isSelected = selectedCardIndex === idx;
-                        const details = getCardDetails(card);
+
 
                         return (
-                            <div
-                                key={card.id}
-                                onClick={() => setSelectedCardIndex(idx)}
-                                style={{
-                                    border: isSelected ? '3px solid yellow' : '1px solid #777',
-                                    margin: `0 ${CARD_STYLE.GAP / 2}px`,
-                                    padding: isSelected ? '15px' : '10px',
-                                    cursor: 'pointer',
-                                    background: card.type === 'EVENT' ? '#552255' : '#444',
-                                    width: isSelected ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
-                                    height: isSelected ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: isSelected ? 'flex-start' : 'center',
-                                    transition: 'all 0.2s ease-in-out',
-                                    transform: isSelected ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
-                                    boxShadow: isSelected ? '0 5px 15px rgba(255,255,0,0.3)' : 'none',
-                                    borderRadius: '8px',
-                                    position: 'relative',
-                                    zIndex: isSelected ? 10 : 1,
-                                    textAlign: 'center'
-                                }}
-                            >
-                                <div style={{ fontSize: isSelected ? '0.9em' : '0.8em', fontWeight: 'bold', marginBottom: isSelected ? '5px' : '0' }}>
-                                    {details?.name || (card.type === 'UNIT' ? card.unitId : card.eventId)}
-                                </div>
-                                <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: isSelected ? '10px' : '0' }}>
-                                    {card.type} {card.type === 'UNIT' && isSelected ? `(${details.weight})` : ''}
-                                </div>
-
-                                {isSelected && (
-                                    <div style={{ width: '100%', textAlign: 'left', overflow: 'hidden' }}>
-                                        {card.type === 'UNIT' && details.activate && (
-                                            <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                                <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
-                                            </div>
-                                        )}
-                                        {card.type === 'UNIT' && details.primary && (
-                                            <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                                <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
-                                            </div>
-                                        )}
-                                        <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
-                                            {details.description}
-                                        </p>
-                                    </div>
-                                )}
+                            <div key={card.id} style={{ margin: `0 ${CARD_STYLE.GAP / 2}px` }}>
+                                <BoardCard
+                                    card={card}
+                                    isFaceUp={true}
+                                    selected={isSelected}
+                                    onClick={() => setSelectedCardIndex(idx)}
+                                />
                             </div>
                         );
                     })}
