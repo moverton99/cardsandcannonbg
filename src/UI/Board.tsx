@@ -1,24 +1,16 @@
 import React, { useState } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { GameState, Slot, COLUMNS, PHASES, PlayerID } from '../Game/types';
-import unitData from '../data/units.json';
-import eventData from '../data/events.json';
+import { CARD_STYLE, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from './styles';
+import { getCardDetails } from './cardDetails';
 
 interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
-const CARD_STYLE = {
-    WIDTH: 80,
-    HEIGHT: 100,
-    SELECTED_WIDTH: 143,
-    SELECTED_HEIGHT: 182,
-    SELECTED_LIFT: -25,
-    GAP: 10,
-    BOARD_SLOT_PADDING: 5,
-};
+
 
 const BoardCard: React.FC<{ card: any, isFaceUp: boolean }> = ({ card, isFaceUp }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const details = card.type === 'UNIT' ? (unitData as any)[card.unitId] : (eventData as any)[card.eventId];
+    const details = getCardDetails(card);
 
     const style: React.CSSProperties = {
         width: isHovered ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
@@ -156,18 +148,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 {topCard ? (
                     <BoardCard card={topCard} isFaceUp={false} />
                 ) : (
-                    <div style={{
-                        border: '2px solid #333',
-                        width: '100%',
-                        height: '100%',
-                        background: '#111',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.6em',
-                        color: '#444'
-                    }}>EMPTY</div>
+                    <div style={EMPTY_CARD_SLOT_STYLE}>EMPTY</div>
                 )}
                 {canDraw && (
                     <div style={{
@@ -184,18 +165,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     }} />
                 )}
                 {deck.length > 0 && (
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '-12px',
-                        right: '0',
-                        background: '#333',
-                        color: 'white',
-                        fontSize: '0.6em',
-                        padding: '2px 5px',
-                        borderRadius: '4px',
-                        border: '1px solid #555',
-                        zIndex: 2
-                    }}>
+                    <div style={COUNT_BADGE_STYLE}>
                         {deck.length}
                     </div>
                 )}
@@ -221,32 +191,10 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 {topCard ? (
                     <BoardCard card={topCard} isFaceUp={true} />
                 ) : (
-                    <div style={{
-                        border: '2px solid #333',
-                        width: '100%',
-                        height: '100%',
-                        background: '#111',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.6em',
-                        color: '#444'
-                    }}>EMPTY</div>
+                    <div style={EMPTY_CARD_SLOT_STYLE}>EMPTY</div>
                 )}
                 {pile.length > 0 && (
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '-12px',
-                        right: '0',
-                        background: '#333',
-                        color: 'white',
-                        fontSize: '0.6em',
-                        padding: '2px 5px',
-                        borderRadius: '4px',
-                        border: '1px solid #555',
-                        zIndex: 2
-                    }}>
+                    <div style={COUNT_BADGE_STYLE}>
                         {pile.length}
                     </div>
                 )}
@@ -341,7 +289,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
                     {hand.map((card, idx) => {
                         const isSelected = selectedCardIndex === idx;
-                        const details = card.type === 'UNIT' ? (unitData as any)[card.unitId] : (eventData as any)[card.eventId];
+                        const details = getCardDetails(card);
 
                         return (
                             <div
