@@ -286,6 +286,13 @@ export const CardsAndCannon: Game<GameState> = {
         },
     },
 
+    turn: {
+        onEnd: ({ G }) => {
+            G.hasDrawnCard = false;
+            G.lastDrawnCard = null;
+        }
+    },
+
     // Checking Overrun Passive at end of every move? 
     // Or handled within moves. Game specs say "immediately".
     // For simplicity, we can check it in a simplified way or inside moves.

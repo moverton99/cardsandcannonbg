@@ -152,9 +152,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     transform: canDraw ? 'scale(1.05)' : 'none',
                     transition: 'transform 0.2s'
                 }}>
-                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.8em', color: canDraw ? 'yellow' : '#666', width: '100%', textAlign: 'center' }}>
-                    {canDraw ? 'CLICK TO DRAW' : 'DECK'}
-                </small>
+
                 {topCard ? (
                     <BoardCard card={topCard} isFaceUp={false} />
                 ) : (
