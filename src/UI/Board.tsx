@@ -269,7 +269,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
         return (
             <div key={colId} style={{ display: 'flex', flexDirection: 'column', margin: '0 10px', alignItems: 'center' }}>
-                <h3>{colId.toUpperCase()}</h3>
+
 
                 {/* Player 1 Area */}
                 <div style={{ border: '1px dashed red', padding: '5px' }}>
@@ -420,9 +420,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
-            <div style={{ marginBottom: '10px' }}>
-                Phase: <strong>{currentPhase}</strong> | Player: <strong>{ctx.currentPlayer}</strong>
-            </div>
+
 
             <div style={{ display: 'flex', flexDirection: 'row', gap: '40px', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -482,6 +480,11 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
                 </div>
                 {renderHand()}
+            </div>
+
+            <div style={{ marginTop: '20px', textAlign: 'center', color: '#aaa', fontSize: '0.9em' }}>
+                <div>Phase: <strong style={{ color: '#fff' }}>{currentPhase.toUpperCase()}</strong></div>
+                <div style={{ marginTop: '5px' }}>Current Player: <strong style={{ color: '#fff' }}>{ctx.currentPlayer === '0' ? 'PLAYER 0 (BLUE)' : 'PLAYER 1 (RED)'}</strong></div>
             </div>
 
             {/* Discard Carousel Popup */}
