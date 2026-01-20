@@ -35,7 +35,7 @@ const BoardCard: React.FC<{ card: any, isFaceUp: boolean }> = ({ card, isFaceUp 
         position: isHovered ? 'absolute' : 'relative',
         zIndex: isHovered ? 100 : 1,
         textAlign: 'center',
-        padding: isHovered ? '15px' : '5px',
+        padding: isHovered ? '15px' : '10px',
         boxShadow: isHovered ? '0 10px 25px rgba(0,0,0,0.8)' : 'none',
         transform: isHovered ? `translateY(${CARD_STYLE.SELECTED_LIFT}px)` : 'none',
         overflow: 'hidden',
