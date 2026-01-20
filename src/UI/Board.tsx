@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { GameState, COLUMNS, PHASES, PlayerID } from '../Game/types';
 import { DeckPile } from '../components/DeckPile';
@@ -6,6 +6,7 @@ import { DiscardPile } from '../components/DiscardPile';
 import { DiscardOverlay } from '../components/DiscardOverlay';
 import { Column } from '../components/Column';
 import { Hand } from '../components/Hand';
+import { useBoardUI } from '../hooks/useBoardUI';
 
 interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
@@ -14,23 +15,17 @@ interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-    const [viewingDiscardPile, setViewingDiscardPile] = useState<PlayerID | null>(null);
-
-    const effectivePlayerID = playerID || ctx.currentPlayer;
-    const isMyTurn = playerID ? (ctx.currentPlayer === playerID) : true;
-    const currentPhase = ctx.phase;
-
-    React.useEffect(() => {
-        if (currentPhase === PHASES.SUPPLY && G.hasDrawnCard && G.lastDrawnCard && isMyTurn) {
-            const lastIdx = G.players[effectivePlayerID as PlayerID].hand.findIndex(c => c.id === G.lastDrawnCard?.id);
-            if (lastIdx !== -1) {
-                setSelectedCardIndex(lastIdx);
-            }
-        }
-    }, [G.hasDrawnCard, G.lastDrawnCard, isMyTurn, currentPhase]);
-    const me = G.players[effectivePlayerID as PlayerID];
-    const handLimitExceeded = me.hand.length > 7;
+    const {
+        selectedCardIndex,
+        setSelectedCardIndex,
+        viewingDiscardPile,
+        setViewingDiscardPile,
+        effectivePlayerID,
+        isMyTurn,
+        currentPhase,
+        me,
+        handLimitExceeded
+    } = useBoardUI({ G, ctx, playerID });
 
     const handleAdvance = (colId: string) => {
         moves.Advance(colId);
