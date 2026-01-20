@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { BoardProps } from 'boardgame.io/react';
-import { GameState, Slot, COLUMNS, PHASES, PlayerID } from '../Game/types';
-import { CARD_STYLE, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from './styles';
-
-import { BoardCard } from '../components/BoardCard';
+import { GameState, COLUMNS, PHASES, PlayerID } from '../Game/types';
+import { DeckPile } from '../components/DeckPile';
+import { DiscardPile } from '../components/DiscardPile';
+import { DiscardOverlay } from '../components/DiscardOverlay';
+import { Column } from '../components/Column';
+import { Hand } from '../components/Hand';
 
 interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
@@ -41,224 +43,35 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         }
     };
 
-    const renderSlot = (slot: Slot, label: string) => {
-        return (
-            <div style={{
-                border: '2px dashed #444',
-                width: `${CARD_STYLE.WIDTH + CARD_STYLE.BOARD_SLOT_PADDING * 2}px`,
-                height: `${CARD_STYLE.HEIGHT + CARD_STYLE.BOARD_SLOT_PADDING * 2}px`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#222',
-                margin: '5px',
-                position: 'relative',
-                borderRadius: '10px'
-            }}>
-                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.6em', color: '#888' }}>{label}</small>
-                {slot.status === 'OCCUPIED' && slot.card && (
-                    <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} />
-                )}
-                {slot.isOperational && <div style={{ position: 'absolute', bottom: '-15px', color: 'yellow', fontSize: '0.6em' }}>READY</div>}
-            </div>
-        );
-    };
 
-    const renderDeck = (pid: PlayerID) => {
-        const deck = G.players[pid].deck;
-        const topCard = deck.length > 0 ? { type: 'UNIT', id: 'back' } : null; // Dummy for back
-        const canDraw = currentPhase === PHASES.SUPPLY && isMyTurn && pid === effectivePlayerID && !G.hasDrawnCard;
 
-        return (
-            <div
-                onClick={() => canDraw && moves.DrawCard()}
-                style={{
-                    position: 'relative',
-                    width: `${CARD_STYLE.WIDTH}px`,
-                    height: `${CARD_STYLE.HEIGHT}px`,
-                    cursor: canDraw ? 'pointer' : 'default',
-                    transform: canDraw ? 'scale(1.05)' : 'none',
-                    transition: 'transform 0.2s'
-                }}>
 
-                {topCard ? (
-                    <BoardCard card={topCard} isFaceUp={false} />
-                ) : (
-                    <div style={EMPTY_CARD_SLOT_STYLE}>EMPTY</div>
-                )}
-                {canDraw && (
-                    <div style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        width: '100%',
-                        height: '100%',
-                        border: '2px solid yellow',
-                        borderRadius: '8px',
-                        pointerEvents: 'none',
-                        boxShadow: '0 0 10px yellow',
-                        animation: 'pulse 1.5s infinite'
-                    }} />
-                )}
-                {deck.length > 0 && (
-                    <div style={COUNT_BADGE_STYLE}>
-                        {deck.length}
-                    </div>
-                )}
-            </div>
-        );
-    };
 
-    const renderDiscardPile = (pid: PlayerID) => {
-        const pile = G.players[pid].discardPile;
-        const topCard = pile.length > 0 ? pile[pile.length - 1] : null;
 
-        return (
-            <div
-                onClick={() => pile.length > 0 && setViewingDiscardPile(pid)}
-                style={{
-                    width: `${CARD_STYLE.WIDTH}px`,
-                    height: `${CARD_STYLE.HEIGHT}px`,
-                    cursor: pile.length > 0 ? 'pointer' : 'default',
-                    position: 'relative',
-                }}
-            >
-                <small style={{ position: 'absolute', top: '-15px', fontSize: '0.8em', color: '#666', width: '100%', textAlign: 'center' }}>DISCARD</small>
-                {topCard ? (
-                    <BoardCard card={topCard} isFaceUp={true} />
-                ) : (
-                    <div style={EMPTY_CARD_SLOT_STYLE}>EMPTY</div>
-                )}
-                {pile.length > 0 && (
-                    <div style={COUNT_BADGE_STYLE}>
-                        {pile.length}
-                    </div>
-                )}
-            </div>
-        );
-    };
 
     const renderColumn = (colId: string) => {
-        const col = G.columns[colId as keyof typeof G.columns];
-        // We want to render P1 at top (looking down?) or P0 at bottom?
-        // Let's render P1's slots at top (Rear -> Front) and P0's at bottom (Front -> Rear)
-        // to simulate the "meeting in the middle".
-
-        // P1 Pipeline
-        const p1 = col.players['1'];
-        // P0 Pipeline
-        const p0 = col.players['0'];
-        const myCol = col.players[effectivePlayerID as PlayerID];
-        const isFull = myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'OCCUPIED';
-
         return (
-            <div key={colId} style={{ display: 'flex', flexDirection: 'column', margin: '0 10px', alignItems: 'center' }}>
-
-
-                {/* Player 1 Area */}
-                <div style={{ border: '1px dashed red', padding: '5px' }}>
-                    {renderSlot(p1.rear, 'P1 Rear')}
-                    {renderSlot(p1.reserve, 'P1 Rsrv')}
-                    {renderSlot(p1.front, 'P1 Front')}
-                </div>
-
-                {/* No Man's Land / Engagement Line */}
-                <div style={{ height: '20px', background: '#000', width: '100%' }}></div>
-
-                {/* Player 0 Area */}
-                <div style={{ border: '1px dashed blue', padding: '5px' }}>
-                    {renderSlot(p0.front, 'P0 Front')}
-                    {renderSlot(p0.reserve, 'P0 Rsrv')}
-                    {renderSlot(p0.rear, 'P0 Rear')}
-                </div>
-
-                {/* Controls */}
-                {isMyTurn && (
-                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-                        {currentPhase === PHASES.LOGISTICS && (
-                            <button onClick={() => handleAdvance(colId)} disabled={isFull}>Adv</button>
-                        )}
-
-                        {currentPhase === PHASES.LOGISTICS && colId === 'center' && (
-                            <button
-                                onClick={() => moves.Pass()}
-                                style={{
-                                    marginTop: '10px',
-                                    padding: '8px 25px',
-                                    background: '#444',
-                                    color: 'white',
-                                    border: '1px solid #666',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    fontSize: '0.8em',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                PASS LOGISTICS
-                            </button>
-                        )}
-
-                        {currentPhase === PHASES.LOGISTICS && selectedCardIndex !== null && (
-                            G.players[effectivePlayerID as PlayerID].hand[selectedCardIndex]?.type === 'EVENT' ? (
-                                <button onClick={() => {
-                                    moves.PlayEvent(selectedCardIndex);
-                                    setSelectedCardIndex(null);
-                                }}>Play Event</button>
-                            ) : null
-                        )}
-                        {currentPhase === PHASES.COMMITMENT && (
-                            <button onClick={() => handleShip(colId)} disabled={selectedCardIndex === null || isFull}>Ship</button>
-                        )}
-                    </div>
-                )}
-            </div>
+            <Column
+                key={colId}
+                colId={colId}
+                col={G.columns[colId as keyof typeof G.columns]}
+                currentPhase={currentPhase}
+                isMyTurn={isMyTurn}
+                effectivePlayerID={effectivePlayerID as PlayerID}
+                selectedCardIndex={selectedCardIndex}
+                hand={G.players[effectivePlayerID as PlayerID].hand}
+                onAdvance={handleAdvance}
+                onShip={handleShip}
+                onPassLogistics={() => moves.Pass()}
+                onPlayEvent={(idx) => {
+                    moves.PlayEvent(idx);
+                    setSelectedCardIndex(null);
+                }}
+            />
         );
     };
 
-    const renderHand = () => {
-        const hand = G.players[effectivePlayerID as keyof typeof G.players].hand;
-        const isDisabled = viewingDiscardPile !== null;
 
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
-                <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
-                    {hand.map((card, idx) => {
-                        const isSelected = selectedCardIndex === idx;
-
-
-                        return (
-                            <div key={card.id} style={{ margin: `0 ${CARD_STYLE.GAP / 2}px` }}>
-                                <BoardCard
-                                    card={card}
-                                    isFaceUp={true}
-                                    selected={isSelected}
-                                    onClick={() => setSelectedCardIndex(idx)}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-                {handLimitExceeded && isMyTurn && currentPhase === PHASES.SUPPLY && (
-                    <div style={{ marginTop: '10px' }}>
-                        <button
-                            disabled={selectedCardIndex === null}
-                            onClick={() => {
-                                if (selectedCardIndex !== null) {
-                                    moves.DiscardCard(selectedCardIndex);
-                                    setSelectedCardIndex(null);
-                                }
-                            }}
-                            style={{ padding: '10px 20px', background: '#aa0000', color: 'white', borderRadius: '5px', cursor: selectedCardIndex === null ? 'not-allowed' : 'pointer' }}
-                        >
-                            Confirm Discard Selection
-                        </button>
-                    </div>
-                )}
-            </div>
-        );
-    };
 
 
 
@@ -276,15 +89,31 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     {/* Player 1 Sideload */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
                         <div style={{ fontSize: '0.7em', color: 'red', fontWeight: 'bold' }}>P1 ASSETS</div>
-                        {renderDeck('1')}
-                        {renderDiscardPile('1')}
+                        <DeckPile
+                            deckCount={G.players['1'].deck.length}
+                            canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '1' && !G.hasDrawnCard}
+                            onDraw={() => moves.DrawCard()}
+                        />
+                        <DiscardPile
+                            pile={G.players['1'].discardPile}
+                            pid='1'
+                            onOpen={() => setViewingDiscardPile('1')}
+                        />
                     </div>
 
                     {/* Player 0 Sideload */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
                         <div style={{ fontSize: '0.7em', color: 'blue', fontWeight: 'bold' }}>P0 ASSETS</div>
-                        {renderDiscardPile('0')}
-                        {renderDeck('0')}
+                        <DiscardPile
+                            pile={G.players['0'].discardPile}
+                            pid='0'
+                            onOpen={() => setViewingDiscardPile('0')}
+                        />
+                        <DeckPile
+                            deckCount={G.players['0'].deck.length}
+                            canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '0' && !G.hasDrawnCard}
+                            onDraw={() => moves.DrawCard()}
+                        />
                     </div>
                 </div>
             </div>
@@ -323,7 +152,21 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
                     {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
                 </div>
-                {renderHand()}
+                <Hand
+                    hand={me.hand}
+                    selectedCardIndex={selectedCardIndex}
+                    onSelectCard={setSelectedCardIndex}
+                    handLimitExceeded={handLimitExceeded}
+                    isMyTurn={isMyTurn}
+                    currentPhase={currentPhase}
+                    isDisabled={viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && !!G.lastDrawnCard && isMyTurn)}
+                    onConfirmDiscard={() => {
+                        if (selectedCardIndex !== null) {
+                            moves.DiscardCard(selectedCardIndex);
+                            setSelectedCardIndex(null);
+                        }
+                    }}
+                />
             </div>
 
             <div style={{ marginTop: '20px', textAlign: 'center', color: '#aaa', fontSize: '0.9em' }}>
@@ -333,47 +176,11 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
             {/* Discard Carousel Popup */}
             {viewingDiscardPile !== null && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0,0,0,0.9)',
-                    zIndex: 1000,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}>
-                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        <h2 style={{ color: 'white' }}>Player {viewingDiscardPile} Discard Pile</h2>
-                        <button
-                            onClick={() => setViewingDiscardPile(null)}
-                            style={{ padding: '10px 30px', background: '#444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                            CLOSE
-                        </button>
-                    </div>
-
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '15px',
-                        overflowX: 'auto',
-                        padding: '40px',
-                        maxWidth: '90%',
-                        background: '#222',
-                        borderRadius: '15px',
-                        border: '1px solid #444'
-                    }}>
-                        {G.players[viewingDiscardPile].discardPile.map((card, i) => (
-                            <div key={i} style={{ flexShrink: 0 }}>
-                                <BoardCard card={card} isFaceUp={true} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <DiscardOverlay
+                    pid={viewingDiscardPile}
+                    pile={G.players[viewingDiscardPile].discardPile}
+                    onClose={() => setViewingDiscardPile(null)}
+                />
             )}
             {/* Last Drawn Card Popup Removed - Now handled in Hand */}
 
