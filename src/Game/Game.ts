@@ -158,6 +158,7 @@ const Ship: Move<GameState> = ({ G, playerID, events }, columnId: string, cardIn
         pCol.reserve = { ...pCol.rear };
     }
 
+    pCol.rear = createSlot();
     pCol.rear.status = 'OCCUPIED';
     pCol.rear.card = card;
     pCol.rear.isFaceUp = false;
@@ -166,7 +167,6 @@ const Ship: Move<GameState> = ({ G, playerID, events }, columnId: string, cardIn
     player.hand.splice(cardIndex, 1);
 
     events.endTurn();
-    events.endPhase();
 };
 
 const PrimaryAction: Move<GameState> = ({ G, playerID }, columnId: string) => {
