@@ -14,7 +14,7 @@ interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
 
 
-export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID, events }) => {
+export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID }) => {
     const {
         selectedCardIndex,
         setSelectedCardIndex,
@@ -130,22 +130,41 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     {currentPhase === PHASES.SUPPLY && isMyTurn && (
                         <>
                             {!G.hasDrawnCard ? (
-                                <div style={{ color: 'yellow', fontSize: '0.9em', fontWeight: 'bold', animation: 'flash 1s infinite alternate' }}>
+                                <button
+                                    onClick={() => moves.DrawCard()}
+                                    style={{
+                                        color: 'yellow',
+                                        fontSize: '0.9em',
+                                        fontWeight: 'bold',
+                                        animation: 'flash 1s infinite alternate',
+                                        background: 'none',
+                                        border: '1px solid yellow',
+                                        padding: '5px 10px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
                                     DRAW A CARD
-                                </div>
+                                </button>
                             ) : (
                                 <>
-                                    {handLimitExceeded && (
+                                    {handLimitExceeded ? (
                                         <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
                                             Discard required: {me.hand.length - 7}
                                         </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => moves.Confirm()}
+                                            style={{ padding: '8px 12px', cursor: 'pointer', background: '#4d4', color: '#000', fontWeight: 'bold' }}
+                                        >
+                                            Confirm Supply
+                                        </button>
                                     )}
                                 </>
                             )}
                         </>
                     )}
-                    {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Arrival</button>}
-                    {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => events && events.endPhase && events.endPhase()}>End Engagement</button>}
+                    {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Arrival</button>}
+                    {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
                     {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
                 </div>
                 <Hand

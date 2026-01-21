@@ -392,36 +392,41 @@ export const CardsAndCannon: Game<GameState> = {
             onBegin: ({ G }) => {
                 G.hasDrawnCard = false;
             },
-            endIf: ({ G, ctx }) => {
-                const player = G.players[ctx.currentPlayer as PlayerID];
-                return G.hasDrawnCard && player.hand.length <= MAX_HAND_SIZE;
+            moves: {
+                DrawCard,
+                DiscardCard,
+                Confirm: ({ events }) => events.setPhase(PHASES.LOGISTICS)
             },
-            moves: { DrawCard, DiscardCard },
-            next: PHASES.LOGISTICS,
         },
         [PHASES.LOGISTICS]: {
-            moves: { Advance, Withdraw, PlayEvent, Pass: ({ events }) => events.endPhase() },
-            next: PHASES.ARRIVAL,
+            moves: {
+                Advance,
+                Withdraw,
+                PlayEvent,
+                Pass: ({ events }) => events.setPhase(PHASES.ARRIVAL)
+            },
         },
         [PHASES.ARRIVAL]: {
             onBegin: ({ G, ctx }) => {
-                G.assetsEnteredFront = []; // Clean up? Or keep from logistics?
-                // Actually RULES say "any_asset_entered_front_this_turn during_phase: logistics".
-                // So we keep the list.
+                G.assetsEnteredFront = [];
                 VERBS.reveal_assets_that_entered_front(G, ctx, {}, ctx.currentPlayer as PlayerID);
                 VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, ctx.currentPlayer as PlayerID);
             },
             onEnd: ({ G }) => {
-                G.assetsEnteredFront = []; // Reset after processing
+                G.assetsEnteredFront = [];
             },
-            next: PHASES.ENGAGEMENT,
+            moves: {
+                Pass: ({ events }) => events.setPhase(PHASES.ENGAGEMENT)
+            },
         },
         [PHASES.ENGAGEMENT]: {
             onBegin: ({ G, ctx }) => {
                 VERBS.ready_assets(G, ctx, {}, ctx.currentPlayer as PlayerID);
             },
-            moves: { PrimaryAction: GenericPrimaryAction, Pass: ({ events }) => events.endPhase() },
-            next: PHASES.COMMITMENT,
+            moves: {
+                PrimaryAction: GenericPrimaryAction,
+                Pass: ({ events }) => events.setPhase(PHASES.COMMITMENT)
+            },
         },
         [PHASES.COMMITMENT]: {
             onBegin: ({ G }) => {
@@ -429,9 +434,11 @@ export const CardsAndCannon: Game<GameState> = {
             },
             moves: {
                 Ship: Deploy,
-                Pass: ({ events }) => events.endTurn()
+                Pass: ({ events }) => {
+                    events.endTurn();
+                    events.setPhase(PHASES.SUPPLY);
+                }
             },
-            next: PHASES.SUPPLY,
         },
     },
 };
