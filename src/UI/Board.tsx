@@ -55,6 +55,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 effectivePlayerID={effectivePlayerID as PlayerID}
                 selectedCardIndex={selectedCardIndex}
                 hand={G.players[effectivePlayerID as PlayerID].hand}
+                hasShipped={G.hasShipped}
                 onAdvance={handleAdvance}
                 onShip={handleShip}
                 onPassLogistics={() => moves.Pass()}
@@ -123,8 +124,8 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     borderRadius: '8px',
                     marginBottom: '0px',
                     minWidth: '150px',
-                    opacity: viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && G.lastDrawnCard && isMyTurn) ? 0.5 : 1,
-                    pointerEvents: viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && G.lastDrawnCard && isMyTurn) ? 'none' : 'auto'
+                    opacity: viewingDiscardPile !== null ? 0.5 : 1,
+                    pointerEvents: viewingDiscardPile !== null ? 'none' : 'auto'
                 }}>
                     {currentPhase === PHASES.SUPPLY && isMyTurn && (
                         <>
@@ -154,7 +155,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     handLimitExceeded={handLimitExceeded}
                     isMyTurn={isMyTurn}
                     currentPhase={currentPhase}
-                    isDisabled={viewingDiscardPile !== null || (currentPhase === PHASES.SUPPLY && !!G.lastDrawnCard && isMyTurn)}
+                    isDisabled={viewingDiscardPile !== null}
                     onConfirmDiscard={() => {
                         if (selectedCardIndex !== null) {
                             moves.DiscardCard(selectedCardIndex);
@@ -177,7 +178,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     onClose={() => setViewingDiscardPile(null)}
                 />
             )}
-            {/* Last Drawn Card Popup Removed - Now handled in Hand */}
 
             <style>{`
                 @keyframes pulse {

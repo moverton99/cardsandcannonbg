@@ -5,11 +5,16 @@
     {
       "id": "forced_march",
       "name": "Forced March",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, you may advance one of your columns.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
         {
           "action": "advance_column",
-          "params": { "choose_column": true },
+          "params": {
+            "choose_column": true
+          },
           "notes": "Does not require taking the movement option in Logistics."
         }
       ]
@@ -17,22 +22,43 @@
     {
       "id": "supply_drop",
       "name": "Supply Drop",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, draw 2 cards. Then, if you have more than 7 cards in hand, discard cards until you have 7.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
-        { "action": "draw_cards", "params": { "amount": 2 } },
-        { "action": "enforce_hand_limit", "params": { "max": 7 } }
+        {
+          "action": "draw_cards",
+          "params": {
+            "amount": 2
+          }
+        },
+        {
+          "action": "enforce_hand_limit",
+          "params": {
+            "max": 7
+          }
+        }
       ]
     },
     {
       "id": "industrial_sabotage",
       "name": "Industrial Sabotage",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, choose an opponent asset in reserve or rear and discard it.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
         {
           "action": "discard_asset",
           "params": {
             "target": "opponent_face_down_asset",
-            "location": { "line_in": ["Rear", "Reserve"] }
+            "location": {
+              "line_in": [
+                "Rear",
+                "Reserve"
+              ]
+            }
           }
         }
       ]
@@ -40,7 +66,10 @@
     {
       "id": "rapid_deployment",
       "name": "Rapid Deployment",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, you may move an asset from your reserve to the front. If you do, you may resolve its activate ability.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
         {
           "action": "move_asset",
@@ -62,13 +91,21 @@
     {
       "id": "battlefield_recon",
       "name": "Battlefield Recon",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, choose an opponent asset in reserve or rear and reveal it. It remains revealed until it is moved or discarded.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
         {
           "action": "reveal_assets",
           "params": {
             "target": "opponent_assets",
-            "location": { "line_in": ["Rear", "Reserve"] },
+            "location": {
+              "line_in": [
+                "Rear",
+                "Reserve"
+              ]
+            },
             "duration": "until_moved_or_discarded"
           }
         }
@@ -77,7 +114,10 @@
     {
       "id": "munitions_reserve",
       "name": "Munitions Reserve",
-      "play_timing": { "phase": "Logistics" },
+      "card text": "When this card is played, you may add one preparation token to one of your heavy assets at the front.",
+      "play_timing": {
+        "phase": "Logistics"
+      },
       "effects": [
         {
           "action": "add_preparation",

@@ -11,6 +11,7 @@ interface ColumnProps {
     effectivePlayerID: PlayerID;
     selectedCardIndex: number | null;
     hand: Card[];
+    hasShipped: boolean;
     onAdvance: (colId: string) => void;
     onShip: (colId: string) => void;
     onPassLogistics: () => void;
@@ -25,6 +26,7 @@ export const Column: React.FC<ColumnProps> = ({
     effectivePlayerID,
     selectedCardIndex,
     hand,
+    hasShipped,
     onAdvance,
     onShip,
     onPassLogistics,
@@ -88,7 +90,7 @@ export const Column: React.FC<ColumnProps> = ({
                         <button onClick={() => onAdvance(colId)} disabled={isFull}>Adv</button>
                     )}
 
-                    {currentPhase === PHASES.LOGISTICS && colId === 'center' && (
+                    {currentPhase === PHASES.LOGISTICS && colId === 'Central' && (
                         <button
                             onClick={onPassLogistics}
                             style={{
@@ -114,7 +116,7 @@ export const Column: React.FC<ColumnProps> = ({
                         ) : null
                     )}
                     {currentPhase === PHASES.COMMITMENT && (
-                        <button onClick={() => onShip(colId)} disabled={selectedCardIndex === null || isFull}>Ship</button>
+                        <button onClick={() => onShip(colId)} disabled={selectedCardIndex === null || myCol.rear.status === 'OCCUPIED' || hasShipped}>Ship</button>
                     )}
                 </div>
             )}

@@ -18,6 +18,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
     const isInteractive = selected === undefined;
     const isExpanded = (selected === true) || isHovered;
 
+
     const style: React.CSSProperties = {
         width: isExpanded ? `${CARD_STYLE.SELECTED_WIDTH}px` : `${CARD_STYLE.WIDTH}px`,
         height: isExpanded ? `${CARD_STYLE.SELECTED_HEIGHT}px` : `${CARD_STYLE.HEIGHT}px`,
@@ -51,27 +52,27 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 <div style={{ fontWeight: 'bold' }}>BACK</div>
             ) : (
                 <>
-                    <div style={{ fontSize: isExpanded ? '0.9em' : '0.7em', fontWeight: 'bold', marginBottom: isExpanded ? '5px' : '0' }}>
-                        {details?.name || 'Unit'}
+                    <div style={{ fontSize: isExpanded ? '0.85em' : '0.65em', fontWeight: 'bold', marginBottom: isExpanded ? '5px' : '0' }}>
+                        {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
                     </div>
                     {isExpanded ? (
                         <div style={{ width: '100%', textAlign: 'left' }}>
-                            <div style={{ fontSize: '0.6em', opacity: 0.8, marginBottom: '10px' }}>
-                                {card.type} ({details?.weight})
+                            {card.type === 'UNIT' && (
+                                <div style={{ fontSize: '0.65em', color: '#ccc', marginBottom: '8px' }}>
+                                    Weight: {(details as any)?.weight}
+                                </div>
+                            )}
+                            <div style={{
+                                fontSize: '0.7em',
+                                fontStyle: 'italic',
+                                color: '#eee',
+                                lineHeight: '1.4',
+                                borderTop: '1px solid #666',
+                                paddingTop: '8px',
+                                marginTop: '4px'
+                            }}>
+                                {(details as any)?.["card text"] || 'No description available'}
                             </div>
-                            {card.type === 'UNIT' && details?.activate && (
-                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                    <strong style={{ color: 'yellow' }}>Act:</strong> {details.activate.length > 20 ? details.activate.substring(0, 17) + '...' : details.activate}
-                                </div>
-                            )}
-                            {card.type === 'UNIT' && details?.primary && (
-                                <div style={{ fontSize: '0.65em', marginBottom: '4px' }}>
-                                    <strong style={{ color: 'cyan' }}>Pri:</strong> {details.primary.length > 20 ? details.primary.substring(0, 17) + '...' : details.primary}
-                                </div>
-                            )}
-                            <p style={{ fontSize: '0.7em', fontStyle: 'italic', margin: '5px 0 0 0', lineHeight: '1.2' }}>
-                                {details?.description}
-                            </p>
                         </div>
                     ) : (
                         <div style={{ fontSize: '0.5em', opacity: 0.7 }}>{card.type}</div>

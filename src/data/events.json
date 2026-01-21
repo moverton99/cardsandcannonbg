@@ -1,55 +1,92 @@
 {
-    "forced_march": {
-        "name": "Forced March",
-        "type": "Event",
-        "effect_id": "BONUS_ADVANCE",
-        "description": "Choose one Column. Perform an Advance action in that Column. This does not count as your one Column action for the Logistics Phase.",
-        "free_action": true
+  "schema_version": "1.0",
+  "card_type": "Event",
+  "events": [
+    {
+      "id": "forced_march",
+      "name": "Forced March",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        {
+          "action": "advance_column",
+          "params": { "choose_column": true },
+          "notes": "Does not require taking the movement option in Logistics."
+        }
+      ]
     },
-    "supply_drop": {
-        "name": "Supply Drop",
-        "type": "Event",
-        "effect_id": "DRAW_CARDS",
-        "params": {
-            "amount": 2
+    {
+      "id": "supply_drop",
+      "name": "Supply Drop",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        { "action": "draw_cards", "params": { "amount": 2 } },
+        { "action": "enforce_hand_limit", "params": { "max": 7 } }
+      ]
+    },
+    {
+      "id": "industrial_sabotage",
+      "name": "Industrial Sabotage",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        {
+          "action": "discard_asset",
+          "params": {
+            "target": "opponent_face_down_asset",
+            "location": { "line_in": ["Rear", "Reserve"] }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rapid_deployment",
+      "name": "Rapid Deployment",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        {
+          "action": "move_asset",
+          "params": {
+            "target": "your_asset_in_reserve",
+            "to_line": "Front",
+            "result_state": "Exposed"
+          }
         },
-        "description": "Draw 2 cards from your deck. If this puts you over the Hand Limit of 7, you must immediately discard down to 7.",
-        "free_action": true
+        {
+          "action": "resolve_activate",
+          "params": {
+            "scope": "moved_asset_if_it_has_activate",
+            "optional": true
+          }
+        }
+      ]
     },
-    "industrial_sabotage": {
-        "name": "Industrial Sabotage",
-        "type": "Event",
-        "effect_id": "DISCARD_OPPONENT_ASSET",
-        "target_lines": [
-            "Rear",
-            "Reserve"
-        ],
-        "description": "Choose an opponent's face-down asset in their Rear (Depot) or Reserve line. The opponent must immediately discard that asset.",
-        "free_action": true
+    {
+      "id": "battlefield_recon",
+      "name": "Battlefield Recon",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        {
+          "action": "reveal_assets",
+          "params": {
+            "target": "opponent_assets",
+            "location": { "line_in": ["Rear", "Reserve"] },
+            "duration": "until_moved_or_discarded"
+          }
+        }
+      ]
     },
-    "rapid_deployment": {
-        "name": "Rapid Deployment",
-        "type": "Event",
-        "effect_id": "RESERVE_TO_FRONT_IMMEDIATE",
-        "description": "Choose one friendly asset in your Reserve line and move it to the Front. The asset becomes Exposed. If it has an 'Activate:' ability, you may resolve it immediately.",
-        "free_action": true
-    },
-    "battlefield_recon": {
-        "name": "Battlefield Recon",
-        "type": "Event",
-        "effect_id": "REVEAL_OPPONENT_LINES",
-        "target_lines": [
-            "Rear",
-            "Reserve"
-        ],
-        "description": "Reveal all face-down assets in your opponent's Reserve and Rear lines. These assets remain face-up until they are moved or discarded.",
-        "free_action": true
-    },
-    "munitions_reserve": {
-        "name": "Munitions Reserve",
-        "type": "Event",
-        "effect_id": "ADD_HEAVY_TOKEN",
-        "description": "Choose a friendly Heavy asset at the Front. Immediately place one 'Aim,' 'Load,' or 'Preparation' token on that card.",
-        "free_action": true
+    {
+      "id": "munitions_reserve",
+      "name": "Munitions Reserve",
+      "play_timing": { "phase": "Logistics" },
+      "effects": [
+        {
+          "action": "add_preparation",
+          "params": {
+            "target": "your_heavy_asset_at_front",
+            "amount": 1
+          }
+        }
+      ]
     }
+  ]
 }

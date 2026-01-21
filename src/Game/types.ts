@@ -1,33 +1,95 @@
 export type PlayerID = '0' | '1';
 
-// Derived from data files
-export type UnitId = 'scout' | 'skirmishers' | 'line_infantry' | 'trench_raiders' | 'artillery_battery' | 'heavy_cannon';
-export type EventId = 'forced_march' | 'supply_drop' | 'industrial_sabotage' | 'rapid_deployment' | 'battlefield_recon' | 'munitions_reserve';
+// --- Data Driven Types ---
 
-export interface BaseCard {
-    id: string; // Unique instance ID
-}
-
-export interface UnitCard extends BaseCard {
-    type: 'UNIT';
-    unitId: UnitId;
-}
-
-export interface EventCard extends BaseCard {
-    type: 'EVENT';
-    eventId: EventId;
-}
-
-export type Card = UnitCard | EventCard;
-
+export type Weight = 'Light' | 'Medium' | 'Heavy';
+export type Line = 'Rear' | 'Reserve' | 'Front';
+export type ColumnId = 'West' | 'Central' | 'East'; // Per rules.yaml
 export type SlotStatus = 'EMPTY' | 'OCCUPIED';
+
+export type Verb =
+    | 'draw_cards'
+    | 'enforce_hand_limit'
+    | 'play_event'
+    | 'advance_column'
+    | 'withdraw_from_front'
+    | 'reveal_assets_that_entered_front'
+    | 'resolve_activate'
+    | 'ready_assets'
+    | 'resolve_primary_action'
+    | 'deploy_from_hand'
+    | 'move_asset'
+    | 'reveal_asset'
+    | 'reveal_assets'
+    | 'discard_asset'
+    | 'Destroy'
+    | 'Withdraw'
+    | 'add_preparation'
+    | 'remove_preparation'
+    | 'has_preparation'
+    | 'choose_effect'
+    | 'triggered_effect'
+    | 'choose_one_or_none';
+
+export interface ActionDef {
+    action: Verb | string; // Start with strict verbs, allow string for flexibility during dev
+    params?: any;
+    target?: string;
+    location?: any;
+    amount?: number | 'all';
+    notes?: string;
+    optional?: boolean;
+    options?: any[];
+    [key: string]: any; // Allow other props from JSON
+}
+
+export interface ActivateDef {
+    timing: string;
+    effects: ActionDef[];
+}
+
+export interface PrimaryActionDef {
+    timing: string;
+    require_state: string;
+    effects?: ActionDef[];
+    choice?: {
+        chooser: string;
+        options: { id: string; effects: ActionDef[] }[];
+    };
+}
+
+export interface UnitDef {
+    id: string;
+    name: string;
+    weight: Weight;
+    "card text"?: string; // Matches JSON key
+    activate: ActivateDef | null;
+    primary_action: PrimaryActionDef | null;
+    fire?: any; // For artillery special case
+}
+
+export interface EventDef {
+    id: string;
+    name: string;
+    "card text"?: string; // Matches JSON key
+    play_timing: { phase: string };
+    effects: ActionDef[];
+}
+
+// --- Game State ---
+
+export interface Card {
+    id: string; // Instance ID
+    type: 'UNIT' | 'EVENT';
+    defId: string; // Link to JSON definition (unitId or eventId)
+}
 
 export interface Slot {
     status: SlotStatus;
     card: Card | null;
     isFaceUp: boolean;
-    isOperational: boolean; // Ready to act
-    tokens: number; // Aim tokens, etc.
+    isOperational: boolean;
+    tokens: number; // Preparation tokens
 }
 
 export interface PlayerColumn {
@@ -37,7 +99,7 @@ export interface PlayerColumn {
 }
 
 export interface Column {
-    id: string; // 'left', 'center', 'right'
+    id: ColumnId;
     players: {
         [key in PlayerID]: PlayerColumn;
     };
@@ -45,9 +107,9 @@ export interface Column {
 
 export interface GameState {
     columns: {
-        left: Column;
-        center: Column;
-        right: Column;
+        West: Column;
+        Central: Column;
+        East: Column;
     };
     players: {
         [key in PlayerID]: {
@@ -57,8 +119,11 @@ export interface GameState {
             breakthroughTokens: number;
         };
     };
+    // Tracking for turn logic
     hasDrawnCard: boolean;
-    lastDrawnCard: Card | null;
+    hasShipped: boolean;
+    assetsEnteredFront: string[]; // Track IDs of assets that entered front this turn for Arrival phase
+    frontsControlledStartTurn: string[]; // For breakthrough condition
 }
 
 export const PHASES = {
@@ -69,4 +134,4 @@ export const PHASES = {
     COMMITMENT: 'commitment',
 } as const;
 
-export const COLUMNS = ['left', 'center', 'right'] as const;
+export const COLUMNS: ColumnId[] = ['West', 'Central', 'East'];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GameState, PlayerID, PHASES } from '../Game/types';
+import { GameState, PlayerID } from '../Game/types';
 
 interface UseBoardUIProps {
     G: GameState;
@@ -16,13 +16,8 @@ export const useBoardUI = ({ G, ctx, playerID }: UseBoardUIProps) => {
     const currentPhase = ctx.phase;
 
     useEffect(() => {
-        if (currentPhase === PHASES.SUPPLY && G.hasDrawnCard && G.lastDrawnCard && isMyTurn) {
-            const lastIdx = G.players[effectivePlayerID as PlayerID].hand.findIndex(c => c.id === G.lastDrawnCard?.id);
-            if (lastIdx !== -1) {
-                setSelectedCardIndex(lastIdx);
-            }
-        }
-    }, [G.hasDrawnCard, G.lastDrawnCard, isMyTurn, currentPhase, effectivePlayerID, G.players]); // Added G.players to dependency array for safety
+        // Feature disabled or TODO: reimplement if needed without G.lastDrawnCard
+    }, [currentPhase, effectivePlayerID]);
 
     const me = G.players[effectivePlayerID as PlayerID];
     const handLimitExceeded = me.hand.length > 7;
