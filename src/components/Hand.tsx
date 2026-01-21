@@ -26,7 +26,7 @@ export const Hand: React.FC<HandProps> = ({
 }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
-            <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '140px', alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '240px', alignItems: 'flex-end' }}>
                 {hand.map((card, idx) => {
                     const isSelected = selectedCardIndex === idx;
 

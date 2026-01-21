@@ -52,18 +52,18 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 <div style={{ fontWeight: 'bold' }}>BACK</div>
             ) : (
                 <>
-                    <div style={{ fontSize: isExpanded ? '0.85em' : '0.65em', fontWeight: 'bold', marginBottom: isExpanded ? '5px' : '0' }}>
+                    <div style={{ fontSize: isExpanded ? '1.2em' : '0.9em', fontWeight: 'bold', marginBottom: isExpanded ? '10px' : '0' }}>
                         {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
                     </div>
                     {isExpanded ? (
                         <div style={{ width: '100%', textAlign: 'left' }}>
                             {card.type === 'UNIT' && (
-                                <div style={{ fontSize: '0.65em', color: '#ccc', marginBottom: '8px' }}>
+                                <div style={{ fontSize: '0.8em', color: '#ccc', marginBottom: '12px' }}>
                                     Weight: {(details as any)?.weight}
                                 </div>
                             )}
                             <div style={{
-                                fontSize: '0.7em',
+                                fontSize: '0.85em',
                                 fontStyle: 'italic',
                                 color: '#eee',
                                 lineHeight: '1.4',
@@ -75,7 +75,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                             </div>
                         </div>
                     ) : (
-                        <div style={{ fontSize: '0.5em', opacity: 0.7 }}>{card.type}</div>
+                        <div style={{ fontSize: '0.7em', opacity: 0.7 }}>{card.type}</div>
                     )}
                 </>
             )}

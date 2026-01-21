@@ -90,6 +90,25 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                             canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '1' && !G.hasDrawnCard}
                             onDraw={() => moves.DrawCard()}
                         />
+                        {currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '1' && !G.hasDrawnCard && (
+                            <button
+                                onClick={() => moves.DrawCard()}
+                                style={{
+                                    color: 'yellow',
+                                    fontSize: '0.9em',
+                                    fontWeight: 'bold',
+                                    animation: 'flash 1s infinite alternate',
+                                    background: 'none',
+                                    border: '1px solid yellow',
+                                    padding: '5px 10px',
+                                    cursor: 'pointer',
+                                    marginTop: '-15px',
+                                    zIndex: 10
+                                }}
+                            >
+                                DRAW A CARD
+                            </button>
+                        )}
                         <DiscardPile
                             pile={G.players['1'].discardPile}
                             pid='1'
@@ -110,6 +129,25 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                             canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '0' && !G.hasDrawnCard}
                             onDraw={() => moves.DrawCard()}
                         />
+                        {currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '0' && !G.hasDrawnCard && (
+                            <button
+                                onClick={() => moves.DrawCard()}
+                                style={{
+                                    color: 'yellow',
+                                    fontSize: '0.9em',
+                                    fontWeight: 'bold',
+                                    animation: 'flash 1s infinite alternate',
+                                    background: 'none',
+                                    border: '1px solid yellow',
+                                    padding: '5px 10px',
+                                    cursor: 'pointer',
+                                    marginTop: '-15px',
+                                    zIndex: 10
+                                }}
+                            >
+                                DRAW A CARD
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -127,39 +165,19 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     opacity: viewingDiscardPile !== null ? 0.5 : 1,
                     pointerEvents: viewingDiscardPile !== null ? 'none' : 'auto'
                 }}>
-                    {currentPhase === PHASES.SUPPLY && isMyTurn && (
+                    {currentPhase === PHASES.SUPPLY && isMyTurn && G.hasDrawnCard && (
                         <>
-                            {!G.hasDrawnCard ? (
-                                <button
-                                    onClick={() => moves.DrawCard()}
-                                    style={{
-                                        color: 'yellow',
-                                        fontSize: '0.9em',
-                                        fontWeight: 'bold',
-                                        animation: 'flash 1s infinite alternate',
-                                        background: 'none',
-                                        border: '1px solid yellow',
-                                        padding: '5px 10px',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    DRAW A CARD
-                                </button>
+                            {handLimitExceeded ? (
+                                <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
+                                    Discard required: {me.hand.length - 7}
+                                </div>
                             ) : (
-                                <>
-                                    {handLimitExceeded ? (
-                                        <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
-                                            Discard required: {me.hand.length - 7}
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => moves.Confirm()}
-                                            style={{ padding: '8px 12px', cursor: 'pointer', background: '#4d4', color: '#000', fontWeight: 'bold' }}
-                                        >
-                                            Confirm Supply
-                                        </button>
-                                    )}
-                                </>
+                                <button
+                                    onClick={() => moves.Confirm()}
+                                    style={{ padding: '8px 12px', cursor: 'pointer', background: '#4d4', color: '#000', fontWeight: 'bold' }}
+                                >
+                                    Confirm Supply
+                                </button>
                             )}
                         </>
                     )}

@@ -1,13 +1,13 @@
 import React from 'react';
 
 export const CARD_STYLE = {
-    WIDTH: 80,
-    HEIGHT: 100,
-    SELECTED_WIDTH: 143,
-    SELECTED_HEIGHT: 182,
+    WIDTH: 160,
+    HEIGHT: 200,
+    SELECTED_WIDTH: 320,
+    SELECTED_HEIGHT: 400,
     SELECTED_LIFT: -25,
     GAP: 10,
-    BOARD_SLOT_PADDING: 5,
+    BOARD_SLOT_PADDING: 10,
 };
 
 export const EMPTY_CARD_SLOT_STYLE: React.CSSProperties = {
