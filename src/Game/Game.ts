@@ -1,5 +1,5 @@
 import { Game, Move, Ctx } from 'boardgame.io';
-import { INVALID_MOVE } from 'boardgame.io/core';
+import { INVALID_MOVE, TurnOrder } from 'boardgame.io/core';
 import { GameState, PHASES, COLUMNS, PlayerID, Card, Slot, ActionDef, UnitDef, EventDef, ColumnId } from './types';
 import { RULES } from '../data/rules';
 import deckData from '../data/deck.json';
@@ -325,10 +325,11 @@ const Withdraw: Move<GameState> = ({ G, ctx }, columnId: string) => {
     VERBS.withdraw_from_front(G, ctx, { columnId, eligible_front_states: ["Exposed", "Operational"] }, ctx.currentPlayer as PlayerID);
 };
 
-const Deploy: Move<GameState> = ({ G, ctx }, columnId: string, cardIndex: number) => {
+const Deploy: Move<GameState> = ({ G, ctx, events }, columnId: string, cardIndex: number) => {
     if (G.hasShipped) return INVALID_MOVE;
     VERBS.deploy_from_hand(G, ctx, { columnId, cardIndex }, ctx.currentPlayer as PlayerID);
     G.hasShipped = true;
+    events.endTurn();
 };
 
 const GenericPrimaryAction: Move<GameState> = ({ G, ctx }, columnId: string) => {
@@ -386,59 +387,72 @@ export const CardsAndCannon: Game<GameState> = {
         };
     },
 
-    phases: {
-        [PHASES.SUPPLY]: {
-            start: true,
-            onBegin: ({ G }) => {
-                G.hasDrawnCard = false;
-            },
-            moves: {
-                DrawCard,
-                DiscardCard,
-                Confirm: ({ events }) => events.setPhase(PHASES.LOGISTICS)
-            },
+    endIf: ({ G }) => {
+        if (G.players['0'].breakthroughTokens >= 3) {
+            return { winner: '0' };
+        }
+        if (G.players['1'].breakthroughTokens >= 3) {
+            return { winner: '1' };
+        }
+    },
+
+    turn: {
+        order: TurnOrder.DEFAULT,
+        onBegin: ({ G, events }) => {
+            G.hasDrawnCard = false; // Original SUPPLY onBegin
+            G.hasShipped = false; // Original COMMITMENT onBegin
+            events.setActivePlayers({ currentPlayer: PHASES.SUPPLY });
         },
-        [PHASES.LOGISTICS]: {
-            moves: {
-                Advance,
-                Withdraw,
-                PlayEvent,
-                Pass: ({ events }) => events.setPhase(PHASES.ARRIVAL)
-            },
-        },
-        [PHASES.ARRIVAL]: {
-            onBegin: ({ G, ctx }) => {
-                G.assetsEnteredFront = [];
-                VERBS.reveal_assets_that_entered_front(G, ctx, {}, ctx.currentPlayer as PlayerID);
-                VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, ctx.currentPlayer as PlayerID);
-            },
-            onEnd: ({ G }) => {
-                G.assetsEnteredFront = [];
-            },
-            moves: {
-                Pass: ({ events }) => events.setPhase(PHASES.ENGAGEMENT)
-            },
-        },
-        [PHASES.ENGAGEMENT]: {
-            onBegin: ({ G, ctx }) => {
-                VERBS.ready_assets(G, ctx, {}, ctx.currentPlayer as PlayerID);
-            },
-            moves: {
-                PrimaryAction: GenericPrimaryAction,
-                Pass: ({ events }) => events.setPhase(PHASES.COMMITMENT)
-            },
-        },
-        [PHASES.COMMITMENT]: {
-            onBegin: ({ G }) => {
-                G.hasShipped = false;
-            },
-            moves: {
-                Ship: Deploy,
-                Pass: ({ events }) => {
-                    events.endTurn();
-                    events.setPhase(PHASES.SUPPLY);
+        stages: {
+            [PHASES.SUPPLY]: {
+                moves: {
+                    DrawCard,
+                    DiscardCard,
+                    Confirm: ({ events }) => {
+                        events.setStage(PHASES.LOGISTICS);
+                    }
                 }
             },
-        },
-    },
+            [PHASES.LOGISTICS]: {
+                moves: {
+                    Advance,
+                    Withdraw,
+                    PlayEvent,
+                    Pass: ({ G, ctx, events }) => {
+                        // Arrival Logic (prev onBegin)
+                        G.assetsEnteredFront = [];
+                        VERBS.reveal_assets_that_entered_front(G, ctx, {}, ctx.currentPlayer as PlayerID);
+                        VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, ctx.currentPlayer as PlayerID);
+                        events.setStage(PHASES.ARRIVAL);
+                    }
+                }
+            },
+            [PHASES.ARRIVAL]: {
+                moves: {
+                    Pass: ({ G, ctx, events }) => {
+                        // Engagement Logic (prev onBegin)
+                        G.assetsEnteredFront = []; // Clean up after Arrival (prev onEnd)
+                        VERBS.ready_assets(G, ctx, {}, ctx.currentPlayer as PlayerID);
+                        events.setStage(PHASES.ENGAGEMENT);
+                    }
+                }
+            },
+            [PHASES.ENGAGEMENT]: {
+                moves: {
+                    PrimaryAction: GenericPrimaryAction,
+                    Pass: ({ events }) => {
+                        events.setStage(PHASES.COMMITMENT);
+                    }
+                }
+            },
+            [PHASES.COMMITMENT]: {
+                moves: {
+                    Ship: Deploy,
+                    Pass: ({ events }) => {
+                        events.endTurn();
+                    }
+                }
+            }
+        }
+    }
 };

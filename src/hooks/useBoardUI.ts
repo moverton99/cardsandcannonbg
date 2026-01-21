@@ -13,7 +13,7 @@ export const useBoardUI = ({ G, ctx, playerID }: UseBoardUIProps) => {
 
     const effectivePlayerID = playerID || ctx.currentPlayer;
     const isMyTurn = playerID ? (ctx.currentPlayer === playerID) : true;
-    const currentPhase = ctx.phase;
+    const currentPhase = ctx.activePlayers?.[ctx.currentPlayer] || ctx.phase;
 
     useEffect(() => {
         // Feature disabled or TODO: reimplement if needed without G.lastDrawnCard
