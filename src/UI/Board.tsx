@@ -60,7 +60,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 onShip={handleShip}
                 onPassLogistics={() => moves.Pass()}
                 onPlayEvent={(idx) => {
-                    moves.PlayEvent(idx);
+                    moves.PlayEvent(idx, colId);
                     setSelectedCardIndex(null);
                 }}
             />

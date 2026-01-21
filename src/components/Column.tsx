@@ -39,6 +39,8 @@ export const Column: React.FC<ColumnProps> = ({
     const myCol = col.players[effectivePlayerID as PlayerID];
     const isFull = myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'OCCUPIED';
 
+    const selectedEventCard = selectedCardIndex !== null && hand[selectedCardIndex]?.type === 'EVENT' ? hand[selectedCardIndex] : null;
+
     const renderSlot = (slot: Slot, label: string) => {
         return (
             <div style={{
@@ -87,7 +89,23 @@ export const Column: React.FC<ColumnProps> = ({
             {isMyTurn && (
                 <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                     {currentPhase === PHASES.LOGISTICS && (
-                        <button onClick={() => onAdvance(colId)} disabled={isFull}>Adv</button>
+                        selectedEventCard ? (
+                            <button
+                                onClick={() => onPlayEvent(selectedCardIndex!)}
+                                style={{
+                                    padding: '5px 10px',
+                                    background: '#800080',
+                                    color: 'white',
+                                    border: '1px solid #a020a0',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Play Event
+                            </button>
+                        ) : (
+                            <button onClick={() => onAdvance(colId)} disabled={isFull}>Adv</button>
+                        )
                     )}
 
                     {currentPhase === PHASES.LOGISTICS && colId === 'Central' && (
@@ -110,11 +128,7 @@ export const Column: React.FC<ColumnProps> = ({
                         </button>
                     )}
 
-                    {currentPhase === PHASES.LOGISTICS && selectedCardIndex !== null && (
-                        hand[selectedCardIndex]?.type === 'EVENT' ? (
-                            <button onClick={() => onPlayEvent(selectedCardIndex)}>Play Event</button>
-                        ) : null
-                    )}
+
                     {currentPhase === PHASES.COMMITMENT && (
                         <button onClick={() => onShip(colId)} disabled={selectedCardIndex === null || myCol.rear.status === 'OCCUPIED' || hasShipped}>Ship</button>
                     )}

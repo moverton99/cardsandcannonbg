@@ -87,7 +87,7 @@ const VERBS: Record<string, VerbFn> = {
         }
     },
     advance_column: (G, _ctx, params, playerID) => {
-        const colId = params.choose_column ? params.columnId : null;
+        const colId = (params.choose_column && params.contextColumnId) ? params.contextColumnId : params.columnId;
         if (!colId) return;
 
         const col = G.columns[colId as keyof typeof G.columns];
@@ -296,7 +296,7 @@ const DiscardCard: Move<GameState> = ({ G, ctx }, cardIndex: number) => {
     }
 };
 
-const PlayEvent: Move<GameState> = ({ G, ctx }, cardIndex: number) => {
+const PlayEvent: Move<GameState> = ({ G, ctx }, cardIndex: number, columnId: string) => {
     const playerID = ctx.currentPlayer as PlayerID;
     const player = G.players[playerID];
     const card = player.hand[cardIndex];
@@ -306,7 +306,7 @@ const PlayEvent: Move<GameState> = ({ G, ctx }, cardIndex: number) => {
     if (!eventDef) return INVALID_MOVE;
 
     // Resolve Effects
-    resolveEffects(G, ctx, eventDef.effects, playerID);
+    resolveEffects(G, ctx, eventDef.effects, playerID, columnId);
 
     // Discard
     player.hand.splice(cardIndex, 1);
