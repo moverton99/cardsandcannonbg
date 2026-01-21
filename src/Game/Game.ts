@@ -251,7 +251,9 @@ export const CardsAndCannon: Game<GameState> = {
                     }
                 })
             },
-            endIf: () => true,
+            turn: {
+                order: TurnOrder.CONTINUE,
+            },
             next: PHASES.ENGAGEMENT,
         },
         [PHASES.ENGAGEMENT]: {
@@ -273,13 +275,12 @@ export const CardsAndCannon: Game<GameState> = {
         },
         [PHASES.COMMITMENT]: {
             turn: {
-                order: TurnOrder.CONTINUE,
+                order: TurnOrder.ONCE,
             },
             moves: {
                 Ship,
                 Pass: ({ events }) => {
                     events.endTurn();
-                    events.endPhase();
                 }
             },
             next: PHASES.SUPPLY, // Loop back

@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "card_type": "Asset",
+  "assets": [
+    {
+      "id": "scout",
+      "name": "Scout",
+      "weight": "Light",
+      "activate": {
+        "timing": "ArrivalPhase",
+        "effects": [
+          {
+            "action": "reveal_asset",
+            "params": {
+              "target": "opponent_face_down_asset",
+              "location": { "line": "Reserve" }
+            }
+          },
+          {
+            "action": "discard_asset",
+            "params": { "target": "self" }
+          }
+        ]
+      },
+      "primary_action": null
+    },
+    {
+      "id": "skirmishers",
+      "name": "Skirmishers",
+      "weight": "Light",
+      "activate": {
+        "timing": "ArrivalPhase",
+        "effects": [
+          {
+            "action": "remove_preparation",
+            "params": {
+              "target": "opponent_asset_at_same_front",
+              "allowed_target_weights": ["Medium", "Heavy"],
+              "amount": "all"
+            }
+          },
+          {
+            "action": "discard_asset",
+            "params": { "target": "self" }
+          }
+        ]
+      },
+      "primary_action": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "effects": [
+          {
+            "action": "Destroy",
+            "params": {
+              "target": "opponent_asset_at_same_front",
+              "allowed_target_weights": ["Light"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "line_infantry",
+      "name": "Line Infantry",
+      "weight": "Medium",
+      "activate": null,
+      "primary_action": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "effects": [
+          {
+            "action": "Destroy",
+            "params": {
+              "target": "opponent_asset_at_same_front",
+              "disallowed_target_weights": ["Heavy"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "trench_raiders",
+      "name": "Trench Raiders",
+      "weight": "Medium",
+      "activate": {
+        "timing": "ArrivalPhase",
+        "effects": [
+          {
+            "action": "Withdraw",
+            "params": {
+              "target": "opponent_asset_at_same_front"
+            }
+          }
+        ]
+      },
+      "primary_action": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "effects": [
+          {
+            "action": "Destroy",
+            "params": {
+              "target": "opponent_asset_at_same_front",
+              "allowed_target_weights": ["Light"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "artillery_battery",
+      "name": "Artillery Battery",
+      "weight": "Heavy",
+      "activate": null,
+      "primary_action": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "choice": {
+          "chooser": "controller",
+          "options": [
+            {
+              "id": "prepare",
+              "effects": [
+                {
+                  "action": "add_preparation",
+                  "params": { "target": "self", "amount": 1 }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "fire": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "condition": {
+          "action": "has_preparation",
+          "params": { "target": "self", "at_least": 1 }
+        },
+        "effects": [
+          {
+            "action": "remove_preparation",
+            "params": { "target": "self", "amount": 1 }
+          },
+          {
+            "action": "Destroy",
+            "params": { "target": "opponent_asset_at_same_front" }
+          }
+        ]
+      }
+    },
+    {
+      "id": "heavy_cannon",
+      "name": "Heavy Cannon",
+      "weight": "Heavy",
+      "activate": null,
+      "primary_action": {
+        "timing": "EngagementPhase",
+        "require_state": "Operational",
+        "effects": [
+          {
+            "action": "choose_effect",
+            "params": {
+              "chooser": "target_controller",
+              "options": [
+                {
+                  "id": "Destroy",
+                  "effects": [
+                    {
+                      "action": "Destroy",
+                      "params": { "target": "opponent_asset_at_same_front" }
+                    }
+                  ]
+                },
+                {
+                  "id": "Withdraw",
+                  "effects": [
+                    {
+                      "action": "Withdraw",
+                      "params": { "target": "opponent_asset_at_same_front" }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
