@@ -28,6 +28,82 @@ const createSlot = (): Slot => ({
     tokens: 0,
 });
 
+function hasMovementOptions(G: GameState, pid: PlayerID): boolean {
+    const canAdvance = COLUMNS.some(id => {
+        const pCol = G.columns[id as ColumnId].players[pid];
+        return (pCol.rear.status === 'OCCUPIED' && pCol.reserve.status === 'EMPTY') ||
+            (pCol.reserve.status === 'OCCUPIED' && pCol.front.status === 'EMPTY');
+    });
+    const canWithdraw = COLUMNS.some(id => {
+        const pCol = G.columns[id as ColumnId].players[pid];
+        return pCol.front.status === 'OCCUPIED' && (pCol.front.isFaceUp || pCol.front.isOperational);
+    });
+    return canAdvance || canWithdraw;
+}
+
+function hasEngagementOptions(G: GameState, pid: PlayerID): boolean {
+    return COLUMNS.some(id => {
+        const pCol = G.columns[id as ColumnId].players[pid];
+        return pCol.front.status === 'OCCUPIED' && pCol.front.isOperational;
+    });
+}
+
+function hasCommitmentOptions(G: GameState, pid: PlayerID): boolean {
+    if (G.hasShipped) return false;
+    const player = G.players[pid];
+    const hasUnits = player.hand.some(c => c.type === 'UNIT');
+    const hasRearSlot = COLUMNS.some(id => G.columns[id as ColumnId].players[pid].rear.status === 'EMPTY');
+    return hasUnits && hasRearSlot;
+}
+
+function handleLogisticsEnd(G: GameState, ctx: any, pid: PlayerID) {
+    G.assetsEnteredFront = [];
+    VERBS.reveal_assets_that_entered_front(G, ctx, {}, pid);
+    VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, pid);
+
+    G.assetsEnteredFront = [];
+    VERBS.ready_assets(G, ctx, {}, pid);
+}
+
+function checkAutoAdvance(G: GameState, ctx: any, events: any) {
+    const pid = ctx.currentPlayer as PlayerID;
+    let currentStage = ctx.activePlayers?.[pid] || ctx.phase;
+
+    // Use a loop to handle multiple skips in a single move/event call.
+    // Note: events.setStage is not immediate in ctx, so we track 'currentStage' locally.
+    while (true) {
+        if (currentStage === PHASES.SUPPLY) {
+            if (G.players[pid].hand.length <= MAX_HAND_SIZE) {
+                events.setStage(PHASES.LOGISTICS);
+                G.hasMovedLogistics = false;
+                currentStage = PHASES.LOGISTICS;
+                continue;
+            }
+        } else if (currentStage === PHASES.LOGISTICS) {
+            const player = G.players[pid];
+            const hasEvents = player.hand.some(c => c.type === 'EVENT');
+            const canMove = !G.hasMovedLogistics && hasMovementOptions(G, pid);
+            if (!hasEvents && !canMove) {
+                handleLogisticsEnd(G, ctx, pid);
+                events.setStage(PHASES.ENGAGEMENT);
+                currentStage = PHASES.ENGAGEMENT;
+                continue;
+            }
+        } else if (currentStage === PHASES.ENGAGEMENT) {
+            if (!hasEngagementOptions(G, pid)) {
+                events.setStage(PHASES.COMMITMENT);
+                currentStage = PHASES.COMMITMENT;
+                continue;
+            }
+        } else if (currentStage === PHASES.COMMITMENT) {
+            if (!hasCommitmentOptions(G, pid)) {
+                events.endTurn();
+            }
+        }
+        break;
+    }
+}
+
 const generateDeck = (): Card[] => {
     const deck: Card[] = [];
 
@@ -371,15 +447,16 @@ const DrawCard: Move<GameState> = ({ G, ctx }, amount: number = 1) => {
     VERBS.draw_cards(G, ctx, { amount }, ctx.currentPlayer as PlayerID);
 };
 
-const DiscardCard: Move<GameState> = ({ G, ctx }, cardIndex: number) => {
+const DiscardCard: Move<GameState> = ({ G, ctx, events }, cardIndex: number) => {
     const player = G.players[ctx.currentPlayer as PlayerID];
     if (cardIndex >= 0 && cardIndex < player.hand.length) {
         const [card] = player.hand.splice(cardIndex, 1);
         player.discardPile.push(card);
     }
+    checkAutoAdvance(G, ctx, events);
 };
 
-const PlayEvent: Move<GameState> = ({ G, ctx }, cardIndex: number, columnId: string) => {
+const PlayEvent: Move<GameState> = ({ G, ctx, events }, cardIndex: number, columnId: string) => {
     const playerID = ctx.currentPlayer as PlayerID;
     const player = G.players[playerID];
     const card = player.hand[cardIndex];
@@ -394,18 +471,22 @@ const PlayEvent: Move<GameState> = ({ G, ctx }, cardIndex: number, columnId: str
     // Discard
     player.hand.splice(cardIndex, 1);
     player.discardPile.push(card);
+
+    checkAutoAdvance(G, ctx, events);
 };
 
-const Advance: Move<GameState> = ({ G, ctx }, columnId: string) => {
+const Advance: Move<GameState> = ({ G, ctx, events }, columnId: string) => {
+    if (G.hasMovedLogistics) return INVALID_MOVE;
     VERBS.advance_column(G, ctx, { choose_column: true, columnId }, ctx.currentPlayer as PlayerID);
-    // Auto-end phase in Logistics if move taken? 
-    // rules.yaml says "choose_one_or_none" options.
-    // If we take Advance, we consume the option.
-    // Ideally we track "hasMoved" state. For now, we cycle phase or let UI handle "End Phase".
+    G.hasMovedLogistics = true;
+    checkAutoAdvance(G, ctx, events);
 };
 
-const Withdraw: Move<GameState> = ({ G, ctx }, columnId: string) => {
+const Withdraw: Move<GameState> = ({ G, ctx, events }, columnId: string) => {
+    if (G.hasMovedLogistics) return INVALID_MOVE;
     VERBS.withdraw_from_front(G, ctx, { columnId, eligible_front_states: ["Exposed", "Operational"] }, ctx.currentPlayer as PlayerID);
+    G.hasMovedLogistics = true;
+    checkAutoAdvance(G, ctx, events);
 };
 
 const Deploy: Move<GameState> = ({ G, ctx, events }, columnId: string, cardIndex: number) => {
@@ -419,7 +500,7 @@ const SetNextCard: Move<GameState> = ({ G }, cardId: string) => {
     G.nextCardId = cardId;
 };
 
-const GenericPrimaryAction: Move<GameState> = ({ G, ctx }, columnId: string) => {
+const GenericPrimaryAction: Move<GameState> = ({ G, ctx, events }, columnId: string) => {
     const playerID = ctx.currentPlayer as PlayerID;
     const pCol = G.columns[columnId as keyof typeof G.columns].players[playerID];
     if (pCol.front.status !== 'OCCUPIED' || !pCol.front.isOperational) return INVALID_MOVE;
@@ -433,9 +514,8 @@ const GenericPrimaryAction: Move<GameState> = ({ G, ctx }, columnId: string) => 
     }
     // TODO: Handle Choice
 
-    // Mark action used? Per asset limit 1.
-    // Logic to mark asset as "acted".
-    pCol.front.isOperational = false; // Simple "tapped" logic for now? RULES don't explicitly say they exhaust, but usually implied or "per_asset_limit: 1".
+    pCol.front.isOperational = false;
+    checkAutoAdvance(G, ctx, events);
 };
 
 // --- Game Object ---
@@ -468,6 +548,7 @@ export const CardsAndCannon: Game<GameState> = {
                 '1': { hand: p1Hand, deck: p1Deck, discardPile: [], breakthroughTokens: 0 },
             },
             hasDrawnCard: false,
+            hasMovedLogistics: false,
             hasShipped: false,
             assetsEnteredFront: [],
             frontsControlledStartTurn: [],
@@ -485,10 +566,38 @@ export const CardsAndCannon: Game<GameState> = {
 
     turn: {
         order: TurnOrder.DEFAULT,
-        onBegin: ({ G, events }) => {
-            G.hasDrawnCard = false; // Original SUPPLY onBegin
-            G.hasShipped = false; // Original COMMITMENT onBegin
-            events.setActivePlayers({ currentPlayer: PHASES.SUPPLY });
+        onBegin: ({ G, ctx, events }) => {
+            G.hasDrawnCard = false;
+            G.hasShipped = false;
+            G.hasMovedLogistics = false;
+
+            const pid = ctx.currentPlayer as PlayerID;
+            // Auto-draw for Supply
+            VERBS.draw_cards(G, ctx, { amount: 1 }, pid);
+
+            let initialStage: string = PHASES.SUPPLY;
+
+            // Determine initial stage by skipping empty phases
+            if (G.players[pid].hand.length <= MAX_HAND_SIZE) {
+                initialStage = PHASES.LOGISTICS;
+                const player = G.players[pid];
+                const hasEvents = player.hand.some(c => c.type === 'EVENT');
+                const canMove = hasMovementOptions(G, pid);
+                if (!hasEvents && !canMove) {
+                    handleLogisticsEnd(G, ctx, pid);
+                    initialStage = PHASES.ENGAGEMENT;
+                    if (!hasEngagementOptions(G, pid)) {
+                        initialStage = PHASES.COMMITMENT;
+                    }
+                }
+            }
+
+            events.setActivePlayers({ currentPlayer: initialStage });
+
+            // If we landed in Commitment and have no options, end turn immediately
+            if (initialStage === PHASES.COMMITMENT && !hasCommitmentOptions(G, pid)) {
+                events.endTurn();
+            }
         },
         stages: {
             [PHASES.SUPPLY]: {
@@ -496,8 +605,10 @@ export const CardsAndCannon: Game<GameState> = {
                     DrawCard,
                     DiscardCard,
                     SetNextCard,
-                    Confirm: ({ events }) => {
+                    Pass: ({ G, ctx, events }) => {
                         events.setStage(PHASES.LOGISTICS);
+                        G.hasMovedLogistics = false;
+                        checkAutoAdvance(G, { ...ctx, activePlayers: { [ctx.currentPlayer]: PHASES.LOGISTICS } }, events);
                     }
                 }
             },
@@ -508,29 +619,18 @@ export const CardsAndCannon: Game<GameState> = {
                     PlayEvent,
                     SetNextCard,
                     Pass: ({ G, ctx, events }) => {
-                        // Arrival Logic (prev onBegin)
-                        G.assetsEnteredFront = [];
-                        VERBS.reveal_assets_that_entered_front(G, ctx, {}, ctx.currentPlayer as PlayerID);
-                        VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, ctx.currentPlayer as PlayerID);
-                        events.setStage(PHASES.ARRIVAL);
-                    }
-                }
-            },
-            [PHASES.ARRIVAL]: {
-                moves: {
-                    Pass: ({ G, ctx, events }) => {
-                        // Engagement Logic (prev onBegin)
-                        G.assetsEnteredFront = []; // Clean up after Arrival (prev onEnd)
-                        VERBS.ready_assets(G, ctx, {}, ctx.currentPlayer as PlayerID);
+                        handleLogisticsEnd(G, ctx, ctx.currentPlayer as PlayerID);
                         events.setStage(PHASES.ENGAGEMENT);
+                        checkAutoAdvance(G, { ...ctx, activePlayers: { [ctx.currentPlayer]: PHASES.ENGAGEMENT } }, events);
                     }
                 }
             },
             [PHASES.ENGAGEMENT]: {
                 moves: {
                     PrimaryAction: GenericPrimaryAction,
-                    Pass: ({ events }) => {
+                    Pass: ({ G, ctx, events }) => {
                         events.setStage(PHASES.COMMITMENT);
+                        checkAutoAdvance(G, { ...ctx, activePlayers: { [ctx.currentPlayer]: PHASES.COMMITMENT } }, events);
                     }
                 }
             },

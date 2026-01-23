@@ -74,7 +74,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 hasShipped={G.hasShipped}
                 onAdvance={handleAdvance}
                 onShip={handleShip}
-                onPassLogistics={() => moves.Pass()}
                 onPlayEvent={(idx) => {
                     moves.PlayEvent(idx, colId);
                     setSelectedCardIndex(null);
@@ -143,28 +142,12 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     borderRadius: '8px',
                     marginBottom: '0px',
                     minWidth: '150px',
-                    opacity: viewingDiscardPile !== null ? 0.5 : 1,
-                    pointerEvents: viewingDiscardPile !== null ? 'none' : 'auto'
+                    opacity: (viewingDiscardPile !== null || !isMyTurn) ? 0.5 : 1,
+                    pointerEvents: (viewingDiscardPile !== null || !isMyTurn) ? 'none' : 'auto'
                 }}>
-                    {currentPhase === PHASES.SUPPLY && isMyTurn && G.hasDrawnCard && (
-                        <>
-                            {handLimitExceeded ? (
-                                <div style={{ color: '#ff4444', fontSize: '0.8em', marginBottom: '5px' }}>
-                                    Discard required: {me.hand.length - 7}
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => moves.Confirm()}
-                                    style={{ padding: '8px 12px', cursor: 'pointer', background: '#4d4', color: '#000', fontWeight: 'bold' }}
-                                >
-                                    Confirm Supply
-                                </button>
-                            )}
-                        </>
-                    )}
-                    {currentPhase === PHASES.ARRIVAL && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Arrival</button>}
-                    {currentPhase === PHASES.ENGAGEMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
-                    {currentPhase === PHASES.COMMITMENT && isMyTurn && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+                    {currentPhase === PHASES.LOGISTICS && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>Pass Logistics</button>}
+                    {currentPhase === PHASES.ENGAGEMENT && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
+                    {currentPhase === PHASES.COMMITMENT && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
                 </div>
                 <Hand
                     hand={me.hand}

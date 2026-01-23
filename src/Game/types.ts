@@ -121,6 +121,7 @@ export interface GameState {
     };
     // Tracking for turn logic
     hasDrawnCard: boolean;
+    hasMovedLogistics: boolean;
     hasShipped: boolean;
     assetsEnteredFront: string[]; // Track IDs of assets that entered front this turn for Arrival phase
     frontsControlledStartTurn: string[]; // For breakthrough condition

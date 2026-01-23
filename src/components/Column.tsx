@@ -14,7 +14,6 @@ interface ColumnProps {
     hasShipped: boolean;
     onAdvance: (colId: string) => void;
     onShip: (colId: string) => void;
-    onPassLogistics: () => void;
     onPlayEvent: (idx: number) => void;
     shouldFlip?: boolean;
 }
@@ -30,7 +29,6 @@ export const Column: React.FC<ColumnProps> = ({
     hasShipped,
     onAdvance,
     onShip,
-    onPassLogistics,
     onPlayEvent,
     shouldFlip = false
 }) => {
@@ -128,27 +126,6 @@ export const Column: React.FC<ColumnProps> = ({
                             <button onClick={() => onAdvance(colId)} disabled={isFull}>Adv</button>
                         )
                     )}
-
-                    {currentPhase === PHASES.LOGISTICS && colId === 'Central' && (
-                        <button
-                            onClick={onPassLogistics}
-                            style={{
-                                marginTop: '10px',
-                                padding: '8px 25px',
-                                background: '#444',
-                                color: 'white',
-                                border: '1px solid #666',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                fontSize: '0.8em',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            PASS LOGISTICS
-                        </button>
-                    )}
-
 
                     {currentPhase === PHASES.COMMITMENT && (
                         <button onClick={() => onShip(colId)} disabled={selectedCardIndex === null || myCol.rear.status === 'OCCUPIED' || hasShipped}>Ship</button>
