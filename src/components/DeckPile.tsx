@@ -1,6 +1,6 @@
 import React from 'react';
 import { BoardCard } from './BoardCard';
-import { CARD_STYLE, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from '../UI/styles';
+import { LAYOUT, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from '../UI/styles';
 
 interface DeckPileProps {
     deckCount: number;
@@ -9,22 +9,25 @@ interface DeckPileProps {
 }
 
 export const DeckPile: React.FC<DeckPileProps> = ({ deckCount, canDraw, onDraw }) => {
-    const topCard = deckCount > 0 ? { type: 'UNIT', id: 'back' } : null;
+    const topCard: any = deckCount > 0 ? { type: 'UNIT', id: 'back', defId: 'back' } : null;
 
     return (
         <div
             onClick={() => canDraw && onDraw()}
             style={{
                 position: 'relative',
-                width: `${CARD_STYLE.WIDTH}px`,
-                height: `${CARD_STYLE.HEIGHT}px`,
+                width: '100%',
+                // height: 'auto', // Let aspect ratio drive height
+                aspectRatio: `${LAYOUT.CARD_ASPECT_RATIO}`,
                 cursor: canDraw ? 'pointer' : 'default',
-                transform: canDraw ? 'scale(1.05)' : 'none',
+                transform: canDraw ? 'scale(1.02)' : 'none', // reduced scale to avoid layout shift issues if tight
                 transition: 'transform 0.2s'
             }}>
 
             {topCard ? (
-                <BoardCard card={topCard} isFaceUp={false} />
+                <div style={{ width: '100%', height: '100%' }}>
+                    <BoardCard card={topCard} isFaceUp={false} />
+                </div>
             ) : (
                 <div style={EMPTY_CARD_SLOT_STYLE}>EMPTY</div>
             )}
@@ -36,7 +39,7 @@ export const DeckPile: React.FC<DeckPileProps> = ({ deckCount, canDraw, onDraw }
                     width: '100%',
                     height: '100%',
                     border: '2px solid yellow',
-                    borderRadius: '8px',
+                    borderRadius: LAYOUT.RADIUS,
                     pointerEvents: 'none',
                     boxShadow: '0 0 10px yellow',
                     animation: 'pulse 1.5s infinite'

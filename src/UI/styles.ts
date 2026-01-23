@@ -1,13 +1,11 @@
 import React from 'react';
 
-export const CARD_STYLE = {
-    WIDTH: 160,
-    HEIGHT: 200,
-    SELECTED_WIDTH: 320,
-    SELECTED_HEIGHT: 400,
-    SELECTED_LIFT: -25,
-    GAP: 10,
-    BOARD_SLOT_PADDING: 10,
+// Responsive Layout Constants
+export const LAYOUT = {
+    CARD_ASPECT_RATIO: 4 / 5,
+    GAP_SM: '8px',
+    GAP_MD: '16px',
+    RADIUS: '8px',
 };
 
 export const EMPTY_CARD_SLOT_STYLE: React.CSSProperties = {

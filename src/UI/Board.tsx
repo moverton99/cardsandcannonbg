@@ -1,6 +1,7 @@
 import React from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { GameState, COLUMNS, PHASES, PlayerID } from '../Game/types';
+import { LAYOUT } from '../UI/styles';
 import { DeckPile } from '../components/DeckPile';
 import { DiscardPile } from '../components/DiscardPile';
 import { DiscardOverlay } from '../components/DiscardOverlay';
@@ -85,24 +86,32 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
     const renderSideload = (pid: PlayerID) => {
         const isP1 = pid === '1';
-        const color = isP1 ? 'red' : 'blue';
         const label = `P${pid} ASSETS`;
+        const color = isP1 ? 'red' : 'blue';
         const player = G.players[pid];
         const canDraw = currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === pid && !G.hasDrawnCard;
+        const deckFirst = isP1; // P1 (Top) has deck on top naturally? Or just mimic previous logic
 
-        // In the normal view (P0 at bottom), P1 assets are Deck then Discard (top to bottom)
-        // P0 assets are Discard then Deck (top to bottom)
-        // This keeps the Deck near the "rear" of each player's play area.
-        const deckFirst = isP1;
-
+        // Responsive Sidebar Container
         return (
-            <div key={pid} style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
+            <div key={pid} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: LAYOUT.GAP_MD,
+                padding: '10px',
+                border: '1px solid #444',
+                borderRadius: '10px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%'
+            }}>
                 <div style={{ fontSize: '0.7em', color, fontWeight: 'bold' }}>{label}</div>
                 {deckFirst ? (
                     <>
                         <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
                         {canDraw && (
-                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW A CARD</button>
+                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW</button>
                         )}
                         <DiscardPile pile={player.discardPile} pid={pid} onOpen={() => setViewingDiscardPile(pid)} />
                     </>
@@ -111,7 +120,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         <DiscardPile pile={player.discardPile} pid={pid} onOpen={() => setViewingDiscardPile(pid)} />
                         <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
                         {canDraw && (
-                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW A CARD</button>
+                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW</button>
                         )}
                     </>
                 )}
@@ -120,35 +129,98 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '40px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                    {displayedColumns.map(id => renderColumn(id))}
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            width: '100vw',
+            overflow: 'hidden',
+            background: '#1a1a1a'
+        }}>
+            {/* Main Board Area (Columns + Sidebars) */}
+            <div style={{
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: '120px 1fr 1fr 1fr 120px', // Fixed width sidebars
+                gap: '2px', // Minimal gap
+                padding: '2px',
+                minHeight: 0, // Important for flex/grid nested shrinking
+                overflow: 'hidden'
+            }}>
+                {/* Left Sidebar (P1 Assets if flipped, else P0? Original logic: P1 assets on left if flipped?)
+                    Original: flipped ? [P0, P1] : [P1, P0]
+                    Let's keep that order but assign them to grid cells.
+                    Actually, let's just place them explicitly.
+                */}
+
+                {/* Left Sidebar */}
+                <div style={{ gridColumn: 1 }}>
+                    {shouldFlip ? renderSideload('0') : renderSideload('1')}
                 </div>
 
-                {/* SIDELOAD UI (Decks and Discards) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
-                    {shouldFlip ? [renderSideload('0'), renderSideload('1')] : [renderSideload('1'), renderSideload('0')]}
+                {/* Columns */}
+                {displayedColumns.map((id, index) => (
+                    <div key={id} style={{ gridColumn: 2 + index, height: '100%' }}>
+                        {renderColumn(id)}
+                    </div>
+                ))}
+
+                {/* Right Sidebar */}
+                <div style={{ gridColumn: 5 }}>
+                    {shouldFlip ? renderSideload('1') : renderSideload('0')}
                 </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '15px', marginTop: '20px' }}>
+            {/* Hand & Player Stats Area */}
+            <div style={{
+                flex: '0 0 auto', // Don't grow, size to content (but constrained by max-height of cards)
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                width: '100%',
+                background: '#111',
+                paddingBottom: '10px',
+                borderTop: '1px solid #333',
+                zIndex: 10
+            }}>
+
+                {/* Phase Info & Controls Bar */}
                 <div style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    padding: '10px',
-                    background: '#333',
-                    borderRadius: '8px',
-                    marginBottom: '0px',
-                    minWidth: '150px',
-                    opacity: (viewingDiscardPile !== null || !isMyTurn) ? 0.5 : 1,
-                    pointerEvents: (viewingDiscardPile !== null || !isMyTurn) ? 'none' : 'auto'
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '5px 20px',
+                    fontSize: '0.8em',
+                    color: '#aaa',
+                    borderBottom: '1px solid #222'
                 }}>
-                    {currentPhase === PHASES.LOGISTICS && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>Pass Logistics</button>}
-                    {currentPhase === PHASES.ENGAGEMENT && <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
-                    {currentPhase === PHASES.COMMITMENT && <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+                    <div>
+                        Phase: <strong style={{ color: '#fff' }}>{currentPhase.toUpperCase()}</strong> |
+                        Current: <strong style={{ color: '#fff' }}>{ctx.currentPlayer === '0' ? 'P0 (BLUE)' : 'P1 (RED)'}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {currentPhase === PHASES.LOGISTICS && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>Pass Logistics</button>}
+                        {currentPhase === PHASES.ENGAGEMENT && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
+                        {currentPhase === PHASES.COMMITMENT && <button style={{ padding: '4px 8px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+                    </div>
+
+                    {/* Debug Input */}
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Next card..."
+                            style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '2px', width: '80px' }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    moves.SetNextCard((e.target as HTMLInputElement).value);
+                                    (e.target as HTMLInputElement).value = '';
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
+
                 <Hand
                     hand={me.hand}
                     selectedCardIndex={selectedCardIndex}
@@ -164,28 +236,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         }
                     }}
                 />
-            </div>
-
-            <div style={{ marginTop: '20px', textAlign: 'center', color: '#aaa', fontSize: '0.9em' }}>
-                <div>Phase: <strong style={{ color: '#fff' }}>{currentPhase.toUpperCase()}</strong></div>
-                <div style={{ marginTop: '5px' }}>Current Player: <strong style={{ color: '#fff' }}>{ctx.currentPlayer === '0' ? 'PLAYER 0 (BLUE)' : 'PLAYER 1 (RED)'}</strong></div>
-
-                {/* DEBUG UI */}
-                <div style={{ marginTop: '20px', padding: '10px', border: '1px dashed #666', borderRadius: '5px' }}>
-                    <label style={{ fontSize: '0.8em', marginRight: '10px' }}>Debug Next Card ID:</label>
-                    <input
-                        type="text"
-                        placeholder="e.g. supply_drop"
-                        style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '4px' }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                moves.SetNextCard((e.target as HTMLInputElement).value);
-                                (e.target as HTMLInputElement).value = '';
-                                alert('Next card set!');
-                            }
-                        }}
-                    />
-                </div>
             </div>
 
             {/* Discard Carousel Popup */}

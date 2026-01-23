@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BoardCard } from './BoardCard';
-import { CARD_STYLE } from '../UI/styles';
+import { LAYOUT } from '../UI/styles';
 import { PHASES, Card } from '../Game/types';
 
 interface HandProps {
@@ -24,14 +24,53 @@ export const Hand: React.FC<HandProps> = ({
     isDisabled,
     onConfirmDiscard
 }) => {
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isDisabled ? 0.5 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
-            <div style={{ display: 'flex', marginTop: '20px', padding: '10px', background: '#222', borderRadius: '10px', minHeight: '240px', alignItems: 'flex-end' }}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: isDisabled ? 0.5 : 1,
+            pointerEvents: isDisabled ? 'none' : 'auto',
+            width: '100%',
+            maxWidth: '95vw'
+        }}>
+            <div style={{
+                display: 'flex',
+                padding: '5px',
+                background: '#222',
+                borderRadius: '10px',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                flexWrap: 'nowrap', // Keep single row
+                width: '100%',
+                gap: LAYOUT.GAP_SM,
+                overflowX: 'auto', // Scroll if too narrow
+                minHeight: 'auto', // Don't force height
+                marginTop: '5px'
+            }}>
                 {hand.map((card, idx) => {
                     const isSelected = selectedCardIndex === idx;
 
                     return (
-                        <div key={card.id} style={{ margin: `0 ${CARD_STYLE.GAP / 2}px` }}>
+                        <div
+                            key={card.id}
+                            onMouseEnter={() => setHoveredIndex(idx)}
+                            onMouseLeave={() => setHoveredIndex(null)}
+                            style={{
+                                flex: '0 0 auto',
+                                width: '12vh', // Responsive width based on viewport height (since hand is usually at bottom)
+                                minWidth: '80px',
+                                maxWidth: '140px',
+                                aspectRatio: `${LAYOUT.CARD_ASPECT_RATIO}`,
+                                transition: 'all 0.2s',
+                                transform: isSelected ? 'translateY(-20px)' : (hoveredIndex === idx ? 'translateY(-10px)' : 'none'),
+                                // Base z-index follows order (so right overlaps left), boosting selected or hovered card to top
+                                zIndex: idx + (isSelected || hoveredIndex === idx ? 100 : 0),
+                                position: 'relative' // Ensure z-index applies
+                            }}
+                        >
                             <BoardCard
                                 card={card}
                                 isFaceUp={true}
