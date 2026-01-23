@@ -73,7 +73,8 @@ function checkAutoAdvance(G: GameState, ctx: any, events: any) {
     // Note: events.setStage is not immediate in ctx, so we track 'currentStage' locally.
     while (true) {
         if (currentStage === PHASES.SUPPLY) {
-            if (G.players[pid].hand.length <= MAX_HAND_SIZE) {
+            // Mandatory draw must happen before skip
+            if (G.hasDrawnCard && G.players[pid].hand.length <= MAX_HAND_SIZE) {
                 events.setStage(PHASES.LOGISTICS);
                 G.hasMovedLogistics = false;
                 currentStage = PHASES.LOGISTICS;
@@ -443,8 +444,9 @@ const resolveEffects = (G: GameState, ctx: Ctx, effects: ActionDef[], playerID: 
 
 // --- Moves ---
 
-const DrawCard: Move<GameState> = ({ G, ctx }, amount: number = 1) => {
+const DrawCard: Move<GameState> = ({ G, ctx, events }, amount: number = 1) => {
     VERBS.draw_cards(G, ctx, { amount }, ctx.currentPlayer as PlayerID);
+    checkAutoAdvance(G, ctx, events);
 };
 
 const DiscardCard: Move<GameState> = ({ G, ctx, events }, cardIndex: number) => {
@@ -572,25 +574,7 @@ export const CardsAndCannon: Game<GameState> = {
             G.hasMovedLogistics = false;
 
             const pid = ctx.currentPlayer as PlayerID;
-            // Auto-draw for Supply
-            VERBS.draw_cards(G, ctx, { amount: 1 }, pid);
-
             let initialStage: string = PHASES.SUPPLY;
-
-            // Determine initial stage by skipping empty phases
-            if (G.players[pid].hand.length <= MAX_HAND_SIZE) {
-                initialStage = PHASES.LOGISTICS;
-                const player = G.players[pid];
-                const hasEvents = player.hand.some(c => c.type === 'EVENT');
-                const canMove = hasMovementOptions(G, pid);
-                if (!hasEvents && !canMove) {
-                    handleLogisticsEnd(G, ctx, pid);
-                    initialStage = PHASES.ENGAGEMENT;
-                    if (!hasEngagementOptions(G, pid)) {
-                        initialStage = PHASES.COMMITMENT;
-                    }
-                }
-            }
 
             events.setActivePlayers({ currentPlayer: initialStage });
 
