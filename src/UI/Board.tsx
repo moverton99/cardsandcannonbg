@@ -44,6 +44,22 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
 
 
+    const shouldFlip = ctx.currentPlayer === '1';
+    const displayedColumns = shouldFlip ? [...COLUMNS].reverse() : COLUMNS;
+
+    const DRAW_BUTTON_STYLE: React.CSSProperties = {
+        color: 'yellow',
+        fontSize: '0.9em',
+        fontWeight: 'bold',
+        animation: 'flash 1s infinite alternate',
+        background: 'none',
+        border: '1px solid yellow',
+        padding: '5px 10px',
+        cursor: 'pointer',
+        marginTop: '-15px',
+        zIndex: 10
+    };
+
     const renderColumn = (colId: string) => {
         return (
             <Column
@@ -63,92 +79,57 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     moves.PlayEvent(idx, colId);
                     setSelectedCardIndex(null);
                 }}
+                shouldFlip={shouldFlip}
             />
         );
     };
 
+    const renderSideload = (pid: PlayerID) => {
+        const isP1 = pid === '1';
+        const color = isP1 ? 'red' : 'blue';
+        const label = `P${pid} ASSETS`;
+        const player = G.players[pid];
+        const canDraw = currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === pid && !G.hasDrawnCard;
 
+        // In the normal view (P0 at bottom), P1 assets are Deck then Discard (top to bottom)
+        // P0 assets are Discard then Deck (top to bottom)
+        // This keeps the Deck near the "rear" of each player's play area.
+        const deckFirst = isP1;
 
-
+        return (
+            <div key={pid} style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
+                <div style={{ fontSize: '0.7em', color, fontWeight: 'bold' }}>{label}</div>
+                {deckFirst ? (
+                    <>
+                        <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
+                        {canDraw && (
+                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW A CARD</button>
+                        )}
+                        <DiscardPile pile={player.discardPile} pid={pid} onOpen={() => setViewingDiscardPile(pid)} />
+                    </>
+                ) : (
+                    <>
+                        <DiscardPile pile={player.discardPile} pid={pid} onOpen={() => setViewingDiscardPile(pid)} />
+                        <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
+                        {canDraw && (
+                            <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW A CARD</button>
+                        )}
+                    </>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
-
-
             <div style={{ display: 'flex', flexDirection: 'row', gap: '40px', alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
-                    {COLUMNS.map(id => renderColumn(id))}
+                    {displayedColumns.map(id => renderColumn(id))}
                 </div>
 
                 {/* SIDELOAD UI (Decks and Discards) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
-                    {/* Player 1 Sideload */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '0.7em', color: 'red', fontWeight: 'bold' }}>P1 ASSETS</div>
-                        <DeckPile
-                            deckCount={G.players['1'].deck.length}
-                            canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '1' && !G.hasDrawnCard}
-                            onDraw={() => moves.DrawCard()}
-                        />
-                        {currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '1' && !G.hasDrawnCard && (
-                            <button
-                                onClick={() => moves.DrawCard()}
-                                style={{
-                                    color: 'yellow',
-                                    fontSize: '0.9em',
-                                    fontWeight: 'bold',
-                                    animation: 'flash 1s infinite alternate',
-                                    background: 'none',
-                                    border: '1px solid yellow',
-                                    padding: '5px 10px',
-                                    cursor: 'pointer',
-                                    marginTop: '-15px',
-                                    zIndex: 10
-                                }}
-                            >
-                                DRAW A CARD
-                            </button>
-                        )}
-                        <DiscardPile
-                            pile={G.players['1'].discardPile}
-                            pid='1'
-                            onOpen={() => setViewingDiscardPile('1')}
-                        />
-                    </div>
-
-                    {/* Player 0 Sideload */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', padding: '10px', border: '1px solid #444', borderRadius: '10px' }}>
-                        <div style={{ fontSize: '0.7em', color: 'blue', fontWeight: 'bold' }}>P0 ASSETS</div>
-                        <DiscardPile
-                            pile={G.players['0'].discardPile}
-                            pid='0'
-                            onOpen={() => setViewingDiscardPile('0')}
-                        />
-                        <DeckPile
-                            deckCount={G.players['0'].deck.length}
-                            canDraw={currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '0' && !G.hasDrawnCard}
-                            onDraw={() => moves.DrawCard()}
-                        />
-                        {currentPhase === PHASES.SUPPLY && isMyTurn && effectivePlayerID === '0' && !G.hasDrawnCard && (
-                            <button
-                                onClick={() => moves.DrawCard()}
-                                style={{
-                                    color: 'yellow',
-                                    fontSize: '0.9em',
-                                    fontWeight: 'bold',
-                                    animation: 'flash 1s infinite alternate',
-                                    background: 'none',
-                                    border: '1px solid yellow',
-                                    padding: '5px 10px',
-                                    cursor: 'pointer',
-                                    marginTop: '-15px',
-                                    zIndex: 10
-                                }}
-                            >
-                                DRAW A CARD
-                            </button>
-                        )}
-                    </div>
+                    {shouldFlip ? [renderSideload('0'), renderSideload('1')] : [renderSideload('1'), renderSideload('0')]}
                 </div>
             </div>
 

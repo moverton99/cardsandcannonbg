@@ -16,6 +16,7 @@ interface ColumnProps {
     onShip: (colId: string) => void;
     onPassLogistics: () => void;
     onPlayEvent: (idx: number) => void;
+    shouldFlip?: boolean;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -30,7 +31,8 @@ export const Column: React.FC<ColumnProps> = ({
     onAdvance,
     onShip,
     onPassLogistics,
-    onPlayEvent
+    onPlayEvent,
+    shouldFlip = false
 }) => {
     // P1 Pipeline
     const p1 = col.players['1'];
@@ -68,22 +70,41 @@ export const Column: React.FC<ColumnProps> = ({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', margin: '0 10px', alignItems: 'center' }}>
 
-            {/* Player 1 Area */}
-            <div style={{ border: '1px dashed red', padding: '5px' }}>
-                {renderSlot(p1.rear, 'P1 Rear')}
-                {renderSlot(p1.reserve, 'P1 Rsrv')}
-                {renderSlot(p1.front, 'P1 Front')}
-            </div>
-
-            {/* No Man's Land / Engagement Line */}
-            <div style={{ height: '20px', background: '#000', width: '100%' }}></div>
-
-            {/* Player 0 Area */}
-            <div style={{ border: '1px dashed blue', padding: '5px' }}>
-                {renderSlot(p0.front, 'P0 Front')}
-                {renderSlot(p0.reserve, 'P0 Rsrv')}
-                {renderSlot(p0.rear, 'P0 Rear')}
-            </div>
+            {shouldFlip ? (
+                <>
+                    {/* Player 0 Area (Top when flipped) */}
+                    <div style={{ border: '1px dashed blue', padding: '5px' }}>
+                        {renderSlot(p0.rear, 'P0 Rear')}
+                        {renderSlot(p0.reserve, 'P0 Rsrv')}
+                        {renderSlot(p0.front, 'P0 Front')}
+                    </div>
+                    {/* No Man's Land */}
+                    <div style={{ height: '20px', background: '#000', width: '100%' }}></div>
+                    {/* Player 1 Area (Bottom when flipped) */}
+                    <div style={{ border: '1px dashed red', padding: '5px' }}>
+                        {renderSlot(p1.front, 'P1 Front')}
+                        {renderSlot(p1.reserve, 'P1 Rsrv')}
+                        {renderSlot(p1.rear, 'P1 Rear')}
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* Player 1 Area (Top when not flipped) */}
+                    <div style={{ border: '1px dashed red', padding: '5px' }}>
+                        {renderSlot(p1.rear, 'P1 Rear')}
+                        {renderSlot(p1.reserve, 'P1 Rsrv')}
+                        {renderSlot(p1.front, 'P1 Front')}
+                    </div>
+                    {/* No Man's Land */}
+                    <div style={{ height: '20px', background: '#000', width: '100%' }}></div>
+                    {/* Player 0 Area (Bottom when not flipped) */}
+                    <div style={{ border: '1px dashed blue', padding: '5px' }}>
+                        {renderSlot(p0.front, 'P0 Front')}
+                        {renderSlot(p0.reserve, 'P0 Rsrv')}
+                        {renderSlot(p0.rear, 'P0 Rear')}
+                    </div>
+                </>
+            )}
 
             {/* Controls */}
             {isMyTurn && (
