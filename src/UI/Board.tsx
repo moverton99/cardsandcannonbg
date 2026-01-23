@@ -141,11 +141,12 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
             <div style={{
                 flex: 1,
                 display: 'grid',
-                gridTemplateColumns: '120px 1fr 1fr 1fr 120px', // Fixed width sidebars
-                gap: '2px', // Minimal gap
-                padding: '2px',
+                gridTemplateColumns: '1fr 120px repeat(3, 15vh) 120px 1fr', // Centered board with 150% card width columns
+                gap: '8px', // Slightly better gap
+                padding: '10px 2px',
                 minHeight: 0, // Important for flex/grid nested shrinking
-                overflow: 'hidden'
+                overflow: 'hidden',
+                justifyItems: 'center'
             }}>
                 {/* Left Sidebar (P1 Assets if flipped, else P0? Original logic: P1 assets on left if flipped?)
                     Original: flipped ? [P0, P1] : [P1, P0]
@@ -154,19 +155,19 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 */}
 
                 {/* Left Sidebar */}
-                <div style={{ gridColumn: 1 }}>
+                <div style={{ gridColumn: 2, width: '100%' }}>
                     {shouldFlip ? renderSideload('0') : renderSideload('1')}
                 </div>
 
                 {/* Columns */}
                 {displayedColumns.map((id, index) => (
-                    <div key={id} style={{ gridColumn: 2 + index, height: '100%' }}>
+                    <div key={id} style={{ gridColumn: 3 + index, height: '100%', width: '100%' }}>
                         {renderColumn(id)}
                     </div>
                 ))}
 
                 {/* Right Sidebar */}
-                <div style={{ gridColumn: 5 }}>
+                <div style={{ gridColumn: 6, width: '100%' }}>
                     {shouldFlip ? renderSideload('1') : renderSideload('0')}
                 </div>
             </div>

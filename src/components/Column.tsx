@@ -80,10 +80,10 @@ export const Column: React.FC<ColumnProps> = ({
                 }}>
                     <div style={{
                         maxWidth: '100%',
-                        maxHeight: '100%',
+                        maxHeight: '90%',
                         aspectRatio: `${LAYOUT.CARD_ASPECT_RATIO}`,
                         width: 'auto',
-                        height: 'auto'
+                        height: '90%'
                     }}>
                         {slot.status === 'OCCUPIED' && slot.card && (
                             <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} />
