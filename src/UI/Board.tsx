@@ -205,6 +205,23 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
             <div style={{ marginTop: '20px', textAlign: 'center', color: '#aaa', fontSize: '0.9em' }}>
                 <div>Phase: <strong style={{ color: '#fff' }}>{currentPhase.toUpperCase()}</strong></div>
                 <div style={{ marginTop: '5px' }}>Current Player: <strong style={{ color: '#fff' }}>{ctx.currentPlayer === '0' ? 'PLAYER 0 (BLUE)' : 'PLAYER 1 (RED)'}</strong></div>
+
+                {/* DEBUG UI */}
+                <div style={{ marginTop: '20px', padding: '10px', border: '1px dashed #666', borderRadius: '5px' }}>
+                    <label style={{ fontSize: '0.8em', marginRight: '10px' }}>Debug Next Card ID:</label>
+                    <input
+                        type="text"
+                        placeholder="e.g. supply_drop"
+                        style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '4px' }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                moves.SetNextCard((e.target as HTMLInputElement).value);
+                                (e.target as HTMLInputElement).value = '';
+                                alert('Next card set!');
+                            }
+                        }}
+                    />
+                </div>
             </div>
 
             {/* Discard Carousel Popup */}

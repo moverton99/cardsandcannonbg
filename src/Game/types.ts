@@ -124,6 +124,7 @@ export interface GameState {
     hasShipped: boolean;
     assetsEnteredFront: string[]; // Track IDs of assets that entered front this turn for Arrival phase
     frontsControlledStartTurn: string[]; // For breakthrough condition
+    nextCardId?: string; // DEBUG: Force next card drawn
 }
 
 export const PHASES = {

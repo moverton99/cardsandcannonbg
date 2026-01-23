@@ -71,6 +71,18 @@ const VERBS: Record<string, VerbFn> = {
         const player = G.players[playerID];
         const amount = params.amount || 1;
         for (let i = 0; i < amount; i++) {
+            if (G.nextCardId) {
+                const idx = player.deck.findIndex(c => c.defId === G.nextCardId);
+                if (idx !== -1) {
+                    const card = player.deck.splice(idx, 1)[0];
+                    player.hand.push(card);
+                    G.nextCardId = undefined;
+                    G.hasDrawnCard = true;
+                    continue;
+                }
+                G.nextCardId = undefined;
+            }
+
             if (player.deck.length > 0) {
                 const card = player.deck.pop()!;
                 player.hand.push(card);
@@ -139,8 +151,68 @@ const VERBS: Record<string, VerbFn> = {
             }
         });
     },
+    move_asset: (G, _ctx, params, playerID) => {
+        const colId = params.contextColumnId;
+        if (!colId) return;
+        const col = G.columns[colId as keyof typeof G.columns];
+        const pCol = col.players[playerID];
+
+        if (params.target === 'your_asset_in_reserve' && params.to_line === 'Front') {
+            if (pCol.reserve.status === 'OCCUPIED' && pCol.front.status === 'EMPTY') {
+                pCol.front = { ...pCol.reserve };
+                pCol.reserve = createSlot();
+                if (params.result_state === 'Exposed') pCol.front.isFaceUp = true;
+                // Add to assetsEnteredFront if needed for activate resolve
+                if (pCol.front.card) {
+                    G.assetsEnteredFront.push(pCol.front.card.id);
+                }
+            }
+        }
+    },
+    discard_asset: (G, _ctx, params, playerID) => {
+        const colId = params.contextColumnId;
+        const oppID = playerID === '0' ? '1' : '0';
+
+        if (params.target === 'self' && colId) {
+            // Usually used in unit activate effects
+            // Logic to find which slot 'self' is in... simplified to front for now
+            const pCol = G.columns[colId as keyof typeof G.columns].players[playerID];
+            if (pCol.front.status === 'OCCUPIED') {
+                G.players[playerID].discardPile.push(pCol.front.card!);
+                pCol.front = createSlot();
+                checkOverrun(G, colId);
+            }
+        } else if (params.target === 'opponent_face_down_asset' && colId) {
+            const pCol = G.columns[colId as keyof typeof G.columns].players[oppID];
+            const lines = params.location?.line_in || ['Rear', 'Reserve', 'Front'];
+            for (const line of lines) {
+                const slotKey = line.toLowerCase() as keyof typeof pCol;
+                const slot = pCol[slotKey] as Slot;
+                if (slot.status === 'OCCUPIED' && !slot.isFaceUp) {
+                    G.players[oppID].discardPile.push(slot.card!);
+                    pCol[slotKey] = createSlot() as any;
+                    if (slotKey === 'front') checkOverrun(G, colId);
+                    break; // Just one
+                }
+            }
+        }
+    },
+    reveal_assets: (G, _ctx, params, playerID) => {
+        const colId = params.contextColumnId;
+        const oppID = playerID === '0' ? '1' : '0';
+        if (!colId) return;
+
+        const pCol = G.columns[colId as keyof typeof G.columns].players[oppID];
+        const lines = params.location?.line_in || ['Rear', 'Reserve', 'Front'];
+        lines.forEach((line: string) => {
+            const slotKey = line.toLowerCase() as keyof typeof pCol;
+            const slot = pCol[slotKey] as Slot;
+            if (slot.status === 'OCCUPIED') {
+                slot.isFaceUp = true;
+            }
+        });
+    },
     resolve_activate: (G, ctx, params, playerID) => {
-        // Find assets that entered front (if scope is 'each_asset_that_entered_front')
         if (params.scope === 'each_asset_that_entered_front') {
             COLUMNS.forEach(id => {
                 const colId = id as ColumnId;
@@ -152,6 +224,17 @@ const VERBS: Record<string, VerbFn> = {
                     }
                 }
             });
+        } else if (params.scope === 'moved_asset_if_it_has_activate') {
+            const colId = params.contextColumnId;
+            if (colId) {
+                const pCol = G.columns[colId as keyof typeof G.columns].players[playerID];
+                if (pCol.front.status === 'OCCUPIED' && pCol.front.card) {
+                    const unitDef = UNITS[pCol.front.card.defId];
+                    if (unitDef && unitDef.activate) {
+                        resolveEffects(G, ctx, unitDef.activate.effects, playerID, colId);
+                    }
+                }
+            }
         }
     },
     ready_assets: (G, _ctx, _params, playerID) => {
@@ -164,17 +247,13 @@ const VERBS: Record<string, VerbFn> = {
         });
     },
     deploy_from_hand: (G, _ctx, params, playerID) => {
-        // Params: cardIndex, columnId from Move
         const cardIndex = params.cardIndex;
         const colId = params.columnId;
         const player = G.players[playerID];
         const card = player.hand[cardIndex];
-
         if (!card || card.type !== 'UNIT') return;
-
         const col = G.columns[colId as keyof typeof G.columns];
         const pCol = col.players[playerID];
-
         if (pCol.rear.status === 'EMPTY') {
             pCol.rear.status = 'OCCUPIED';
             pCol.rear.card = card;
@@ -183,26 +262,18 @@ const VERBS: Record<string, VerbFn> = {
             player.hand.splice(cardIndex, 1);
         }
     },
-    // Passive/Effect Verbs
     reveal_asset: (G, _ctx, params, playerID) => {
-        // Target handling is complex. Simplified:
         const target = params.target;
         if (target === 'opponent_face_down_asset' && params.location?.line === 'Reserve') {
             const oppID = playerID === '0' ? '1' : '0';
-            // Search columns
             for (const id of COLUMNS) {
                 const cid = id as ColumnId;
                 const slot = G.columns[cid].players[oppID].reserve;
                 if (slot.status === 'OCCUPIED' && !slot.isFaceUp) {
                     slot.isFaceUp = true;
-                    break; // Just one
+                    break;
                 }
             }
-        }
-    },
-    discard_asset: (_G, _ctx, params, _playerID) => {
-        if (params.target === 'self') {
-            // Context needed
         }
     },
     Destroy: (G, _ctx, params, playerID) => {
@@ -235,7 +306,12 @@ const VERBS: Record<string, VerbFn> = {
         }
     },
     add_preparation: (G, _ctx, params, playerID) => {
-        if (params.target === 'self' && params.contextColumnId) {
+        if (params.target === 'your_heavy_asset_at_front' && params.contextColumnId) {
+            const pCol = G.columns[params.contextColumnId as keyof typeof G.columns].players[playerID];
+            if (pCol.front.status === 'OCCUPIED' && UNITS[pCol.front.card!.defId].weight === 'Heavy') {
+                pCol.front.tokens += (params.amount || 1);
+            }
+        } else if (params.target === 'self' && params.contextColumnId) {
             const pCol = G.columns[params.contextColumnId as keyof typeof G.columns].players[playerID];
             if (pCol.front.status === 'OCCUPIED') {
                 pCol.front.tokens += (params.amount || 1);
@@ -243,7 +319,14 @@ const VERBS: Record<string, VerbFn> = {
         }
     },
     remove_preparation: (G, _ctx, params, playerID) => {
-        if (params.target === 'self' && params.contextColumnId) {
+        if (params.target === 'opponent_asset_at_same_front' && params.contextColumnId) {
+            const oppID = playerID === '0' ? '1' : '0';
+            const pCol = G.columns[params.contextColumnId as keyof typeof G.columns].players[oppID];
+            if (pCol.front.status === 'OCCUPIED') {
+                if (params.amount === 'all') pCol.front.tokens = 0;
+                else pCol.front.tokens = Math.max(0, pCol.front.tokens - (params.amount || 0));
+            }
+        } else if (params.target === 'self' && params.contextColumnId) {
             const pCol = G.columns[params.contextColumnId as keyof typeof G.columns].players[playerID];
             if (pCol.front.status === 'OCCUPIED') {
                 if (params.amount === 'all') pCol.front.tokens = 0;
@@ -332,6 +415,10 @@ const Deploy: Move<GameState> = ({ G, ctx, events }, columnId: string, cardIndex
     events.endTurn();
 };
 
+const SetNextCard: Move<GameState> = ({ G }, cardId: string) => {
+    G.nextCardId = cardId;
+};
+
 const GenericPrimaryAction: Move<GameState> = ({ G, ctx }, columnId: string) => {
     const playerID = ctx.currentPlayer as PlayerID;
     const pCol = G.columns[columnId as keyof typeof G.columns].players[playerID];
@@ -408,6 +495,7 @@ export const CardsAndCannon: Game<GameState> = {
                 moves: {
                     DrawCard,
                     DiscardCard,
+                    SetNextCard,
                     Confirm: ({ events }) => {
                         events.setStage(PHASES.LOGISTICS);
                     }
@@ -418,6 +506,7 @@ export const CardsAndCannon: Game<GameState> = {
                     Advance,
                     Withdraw,
                     PlayEvent,
+                    SetNextCard,
                     Pass: ({ G, ctx, events }) => {
                         // Arrival Logic (prev onBegin)
                         G.assetsEnteredFront = [];
