@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { LAYOUT } from '../UI/styles';
 import { getCardDetails } from '../UI/cardDetails';
 import { Card } from '../Game/types';
@@ -42,40 +43,52 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
     };
 
     // Zoomed Overlay for details
-    const renderOverlay = () => (
-        <div style={{
-            position: 'fixed',
-            top: '50%', // Center vertically
-            left: '50%', // Center horizontally
-            transform: 'translate(-50%, -50%)', // Center magic
-            zIndex: 9999,
-            width: '280px',
-            maxHeight: '90vh', // Prevent overflow
-            overflowY: 'auto',
-            background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#554444',
-            border: '2px solid white',
-            borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 0 50px rgba(0,0,0,0.9)', // Deep shadow to separate from background
-            pointerEvents: 'none', // pass through hover
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '15px'
-        }}>
-            <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
-                {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
-            </div>
-            {card.type === 'UNIT' && (
-                <div style={{ fontSize: '0.9em', color: '#ccc' }}>
-                    Weight: {(details as any)?.weight}
+    const renderOverlay = () => {
+        // Use a portal to escape the parent stacking context (transforms, overflows)
+        return createPortal(
+            <div style={{
+                position: 'fixed',
+                top: '50%', // Center vertically
+                left: '50%', // Center horizontally
+                transform: 'translate(-50%, -50%)', // Center magic
+                zIndex: 9999,
+                width: '30vh', // Scale relative to viewport
+                aspectRatio: LAYOUT.CARD_ASPECT_RATIO, // Enforce same shape
+
+                background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#554444',
+                border: '2px solid white',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 0 50px rgba(0,0,0,0.9)', // Deep shadow to separate from background
+                pointerEvents: 'none', // pass through hover
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '15px',
+                overflow: 'hidden' // Ensure content stays inside shape
+            }}>
+                <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
+                    {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
                 </div>
-            )}
-            <div style={{ fontSize: '0.9em', fontStyle: 'italic', color: '#eee', lineHeight: '1.4' }}>
-                {(details as any)?.["card text"] || 'No description available'}
-            </div>
-            {!isFaceUp && <div>(Face Down)</div>}
-        </div>
-    );
+                {card.type === 'UNIT' && (
+                    <div style={{ fontSize: '0.9em', color: '#ccc' }}>
+                        Weight: {(details as any)?.weight}
+                    </div>
+                )}
+                <div style={{
+                    fontSize: '0.9em',
+                    fontStyle: 'italic',
+                    color: '#eee',
+                    lineHeight: '1.4',
+                    flex: 1, // fill remaining space
+                    overflowY: 'auto' // scroll internal text if needed
+                }}>
+                    {(details as any)?.["card text"] || 'No description available'}
+                </div>
+                {!isFaceUp && <div>(Face Down)</div>}
+            </div>,
+            document.body
+        );
+    };
 
     return (
         <div
