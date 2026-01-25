@@ -32,11 +32,15 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
     const cardStyle: React.CSSProperties = {
         width: '100%',
         height: '100%',
-        background: isFaceUp
+        backgroundColor: isFaceUp
             ? (card.type === 'EVENT' ? '#552255' : '#444')
+            : (card.ownerID === '0' ? '#3b82f6' : '#ef4444'), // Fallback colors for P0/P1
+        backgroundImage: isFaceUp
+            ? 'none'
             : `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         border: selected ? '3px solid yellow' : '1px solid #777',
         borderRadius: LAYOUT.RADIUS,
         display: 'flex',
@@ -64,11 +68,11 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 width: '30vh', // Scale relative to viewport
                 aspectRatio: LAYOUT.CARD_ASPECT_RATIO, // Enforce same shape
 
-                background: isFaceUp
-                    ? (card.type === 'EVENT' ? '#552255' : '#444')
-                    : `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
+                backgroundColor: card.type === 'EVENT' ? '#552255' : '#444',
+                backgroundImage: 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 border: '2px solid white',
                 borderRadius: '12px',
                 padding: '20px',
@@ -79,7 +83,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 gap: '15px',
                 overflow: 'hidden', // Ensure content stays inside shape
             }}>
-                {/* Content over background if face down? (Currently none) */}
+                {/* Content over background */}
                 <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
                     {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
                 </div>
@@ -98,7 +102,6 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 }}>
                     {(details as any)?.["card text"] || 'No description available'}
                 </div>
-                {!isFaceUp && <div>(Face Down)</div>}
             </div>,
             document.body
         );
