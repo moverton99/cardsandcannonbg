@@ -100,7 +100,23 @@ export const Column: React.FC<ColumnProps> = ({
                     </div>
                 </div>
 
-                {slot.isOperational && <div style={{ position: 'absolute', bottom: '2px', right: '5px', color: 'yellow', fontSize: '0.6em', fontWeight: 'bold' }}>READY</div>}
+                {slot.status === 'OCCUPIED' && label.toLowerCase().includes('front') && (
+                    <div
+                        title={slot.isOperational ? 'Ready' : 'Arrived'}
+                        style={{
+                            position: 'absolute',
+                            bottom: '5px',
+                            right: '5px',
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: slot.isOperational ? '#22c55e' : '#eab308', // Green for ready, Yellow otherwise
+                            border: '1px solid rgba(0,0,0,0.5)',
+                            boxShadow: slot.isOperational ? '0 0 5px #22c55e' : 'none',
+                            zIndex: 10
+                        }}
+                    />
+                )}
             </div>
         );
     };
