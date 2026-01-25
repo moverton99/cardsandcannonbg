@@ -155,6 +155,38 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     Actually, let's just place them explicitly.
                 */}
 
+                {/* Current Player Indicator */}
+                <div style={{
+                    gridColumn: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '20px',
+                    textAlign: 'center',
+                    userSelect: 'none'
+                }}>
+                    <div style={{
+                        fontSize: '0.9em',
+                        color: '#666',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '3px',
+                        marginBottom: '4px'
+                    }}>
+                        Current Turn
+                    </div>
+                    <div style={{
+                        fontSize: '2.8em',
+                        fontWeight: '900',
+                        color: ctx.currentPlayer === '0' ? '#3b82f6' : '#ef4444',
+                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
+                        lineHeight: '1'
+                    }}>
+                        PLAYER {ctx.currentPlayer}
+                    </div>
+                </div>
+
                 {/* Left Sidebar */}
                 <div style={{ gridColumn: 2, width: '100%' }}>
                     {shouldFlip ? renderSideload('0') : renderSideload('1')}
@@ -171,6 +203,38 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 <div style={{ gridColumn: 6, width: '100%' }}>
                     {shouldFlip ? renderSideload('1') : renderSideload('0')}
                 </div>
+
+                {/* Phase Indicator */}
+                <div style={{
+                    gridColumn: 7,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '20px',
+                    textAlign: 'center',
+                    userSelect: 'none'
+                }}>
+                    <div style={{
+                        fontSize: '0.9em',
+                        color: '#666',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '3px',
+                        marginBottom: '4px'
+                    }}>
+                        Phase
+                    </div>
+                    <div style={{
+                        fontSize: '2.5em',
+                        fontWeight: '900',
+                        color: ctx.currentPlayer === '0' ? '#3b82f6' : '#ef4444',
+                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
+                        lineHeight: '1'
+                    }}>
+                        {currentPhase.toUpperCase()}
+                    </div>
+                </div>
             </div>
 
             {/* Hand & Player Stats Area */}
@@ -186,7 +250,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 zIndex: 10
             }}>
 
-                {/* Phase Info & Controls Bar */}
+                {/* Info & Controls Bar */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -196,11 +260,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     color: '#aaa',
                     borderBottom: '1px solid #222'
                 }}>
-                    <div>
-                        Phase: <strong style={{ color: '#fff' }}>{currentPhase.toUpperCase()}</strong> |
-                        Current: <strong style={{ color: '#fff' }}>{ctx.currentPlayer === '0' ? 'P0 (BLUE)' : 'P1 (RED)'}</strong>
-                    </div>
-
                     <div style={{ display: 'flex', gap: '10px' }}>
                         {currentPhase === PHASES.LOGISTICS && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>Pass Logistics</button>}
                         {currentPhase === PHASES.ENGAGEMENT && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}

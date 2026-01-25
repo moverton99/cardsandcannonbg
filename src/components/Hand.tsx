@@ -38,7 +38,7 @@ export const Hand: React.FC<HandProps> = ({
         }}>
             <div style={{
                 display: 'flex',
-                padding: '5px',
+                padding: '25px 10px 10px 10px',
                 background: '#222',
                 borderRadius: '10px',
                 alignItems: 'flex-end',
