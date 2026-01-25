@@ -2,14 +2,17 @@ import React from 'react';
 import { BoardCard } from './BoardCard';
 import { LAYOUT, EMPTY_CARD_SLOT_STYLE, COUNT_BADGE_STYLE } from '../UI/styles';
 
+import { PlayerID } from '../Game/types';
+
 interface DeckPileProps {
     deckCount: number;
+    ownerID: PlayerID;
     canDraw: boolean;
     onDraw: () => void;
 }
 
-export const DeckPile: React.FC<DeckPileProps> = ({ deckCount, canDraw, onDraw }) => {
-    const topCard: any = deckCount > 0 ? { type: 'UNIT', id: 'back', defId: 'back' } : null;
+export const DeckPile: React.FC<DeckPileProps> = ({ deckCount, ownerID, canDraw, onDraw }) => {
+    const topCard: any = deckCount > 0 ? { type: 'UNIT', id: 'back', defId: 'back', ownerID } : null;
 
     return (
         <div

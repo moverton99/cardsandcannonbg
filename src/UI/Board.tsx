@@ -152,7 +152,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 <div style={{ fontSize: '0.7em', color, fontWeight: 'bold' }}>{label}</div>
                 {deckFirst ? (
                     <>
-                        <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
+                        <DeckPile deckCount={player.deck.length} ownerID={pid} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
                         {canDraw && (
                             <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW</button>
                         )}
@@ -161,7 +161,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 ) : (
                     <>
                         <DiscardPile pile={player.discardPile} pid={pid} onOpen={() => setViewingDiscardPile(pid)} />
-                        <DeckPile deckCount={player.deck.length} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
+                        <DeckPile deckCount={player.deck.length} ownerID={pid} canDraw={canDraw} onDraw={() => moves.DrawCard()} />
                         {canDraw && (
                             <button onClick={() => moves.DrawCard()} style={DRAW_BUTTON_STYLE}>DRAW</button>
                         )}

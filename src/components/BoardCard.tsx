@@ -32,7 +32,11 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
     const cardStyle: React.CSSProperties = {
         width: '100%',
         height: '100%',
-        background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#222',
+        background: isFaceUp
+            ? (card.type === 'EVENT' ? '#552255' : '#444')
+            : `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         border: selected ? '3px solid yellow' : '1px solid #777',
         borderRadius: LAYOUT.RADIUS,
         display: 'flex',
@@ -60,7 +64,11 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 width: '30vh', // Scale relative to viewport
                 aspectRatio: LAYOUT.CARD_ASPECT_RATIO, // Enforce same shape
 
-                background: isFaceUp ? (card.type === 'EVENT' ? '#552255' : '#444') : '#222',
+                background: isFaceUp
+                    ? (card.type === 'EVENT' ? '#552255' : '#444')
+                    : `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 border: '2px solid white',
                 borderRadius: '12px',
                 padding: '20px',
@@ -71,20 +79,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 gap: '15px',
                 overflow: 'hidden', // Ensure content stays inside shape
             }}>
-                {!isFaceUp && (
-                    <div style={{
-                        position: 'absolute',
-                        top: '-25%',
-                        left: '-25%',
-                        width: '150%',
-                        height: '150%',
-                        backgroundImage: `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        transform: 'rotate(90deg)',
-                        zIndex: 0
-                    }} />
-                )}
+                {/* Content over background if face down? (Currently none) */}
                 <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
                     {card.type === 'UNIT' ? `Unit: ${details?.name}` : `Event: ${details?.name}`}
                 </div>
@@ -118,18 +113,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
         >
             <div style={cardStyle}>
                 {!isFaceUp ? (
-                    <div style={{
-                        position: 'absolute',
-                        top: '-25%',
-                        left: '-25%',
-                        width: '150%',
-                        height: '150%',
-                        backgroundImage: `url(${card.ownerID === '0' ? BlueCardBack : RedCardBack})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        transform: 'rotate(90deg)',
-                        zIndex: 0
-                    }} />
+                    null // Background handled by cardStyle
                 ) : (
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '0.8em', fontWeight: 'bold', marginBottom: '4px', lineHeight: '1.1' }}>
