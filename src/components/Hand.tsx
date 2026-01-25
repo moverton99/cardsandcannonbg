@@ -81,7 +81,7 @@ export const Hand: React.FC<HandProps> = ({
                     );
                 })}
             </div>
-            {handLimitExceeded && isMyTurn && currentPhase === PHASES.SUPPLY && (
+            {handLimitExceeded && isMyTurn && (currentPhase === PHASES.SUPPLY || currentPhase === PHASES.LOGISTICS) && (
                 <div style={{ marginTop: '10px' }}>
                     <button
                         disabled={selectedCardIndex === null}

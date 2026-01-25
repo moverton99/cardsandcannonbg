@@ -57,7 +57,6 @@ function hasCommitmentOptions(G: GameState, pid: PlayerID): boolean {
 }
 
 function handleLogisticsEnd(G: GameState, ctx: any, pid: PlayerID) {
-    G.assetsEnteredFront = [];
     VERBS.reveal_assets_that_entered_front(G, ctx, {}, pid);
     VERBS.resolve_activate(G, ctx, { scope: 'each_asset_that_entered_front' }, pid);
 
@@ -168,12 +167,13 @@ const VERBS: Record<string, VerbFn> = {
         }
     },
     enforce_hand_limit: (G, _ctx, params, playerID) => {
-        const player = G.players[playerID];
-        const max = params.max || MAX_HAND_SIZE;
-        while (player.hand.length > max) {
-            const card = player.hand.pop()!;
-            player.discardPile.push(card);
-        }
+        // const player = G.players[playerID];
+        // const max = params.max || MAX_HAND_SIZE;
+        // while (player.hand.length > max) {
+        //     const card = player.hand.pop()!;
+        //     player.discardPile.push(card);
+        // }
+        // TODO: Enforce via UI blocking or check
     },
     advance_column: (G, _ctx, params, playerID) => {
         const colId = (params.choose_column && params.contextColumnId) ? params.contextColumnId : params.columnId;
@@ -467,12 +467,12 @@ const PlayEvent: Move<GameState> = ({ G, ctx, events }, cardIndex: number, colum
     const eventDef = EVENTS[card.defId];
     if (!eventDef) return INVALID_MOVE;
 
-    // Resolve Effects
-    resolveEffects(G, ctx, eventDef.effects, playerID, columnId);
-
-    // Discard
+    // Discard FIRST to avoid counting towards hand limit during effects
     player.hand.splice(cardIndex, 1);
     player.discardPile.push(card);
+
+    // Resolve Effects
+    resolveEffects(G, ctx, eventDef.effects, playerID, columnId);
 
     checkAutoAdvance(G, ctx, events);
 };
@@ -602,6 +602,7 @@ export const CardsAndCannon: Game<GameState> = {
                     Withdraw,
                     PlayEvent,
                     SetNextCard,
+                    DiscardCard, // Added to allow obeying hand limits during Supply Drop
                     Pass: ({ G, ctx, events }) => {
                         handleLogisticsEnd(G, ctx, ctx.currentPlayer as PlayerID);
                         events.setStage(PHASES.ENGAGEMENT);

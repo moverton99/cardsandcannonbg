@@ -9,9 +9,10 @@ export interface BoardCardProps {
     isFaceUp: boolean;
     selected?: boolean;
     onClick?: () => void;
+    canViewDetails?: boolean;
 }
 
-export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, onClick }) => {
+export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, onClick, canViewDetails }) => {
     const [isHovered, setIsHovered] = useState(false);
     const details = getCardDetails(card);
 
@@ -40,6 +41,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
         transition: 'all 0.1s ease-in-out',
         padding: '5px',
         overflow: 'hidden',
+        color: '#eee',
     };
 
     // Zoomed Overlay for details
@@ -110,8 +112,8 @@ export const BoardCard: React.FC<BoardCardProps> = ({ card, isFaceUp, selected, 
                 )}
             </div>
 
-            {/* Render Overlay if Hovered and FaceUp (or even FaceDown if we want to show it's hidden) */}
-            {isHovered && isFaceUp && renderOverlay()}
+            {/* Render Overlay if Hovered and (FaceUp or Allowed to View) */}
+            {isHovered && (isFaceUp || canViewDetails) && renderOverlay()}
         </div>
     );
 };

@@ -41,7 +41,8 @@ export const Column: React.FC<ColumnProps> = ({
 
     const selectedEventCard = selectedCardIndex !== null && hand[selectedCardIndex]?.type === 'EVENT' ? hand[selectedCardIndex] : null;
 
-    const renderSlot = (slot: Slot, label: string) => {
+    const renderSlot = (slot: Slot, label: string, ownerPid: PlayerID) => {
+        const canViewDetails = effectivePlayerID === ownerPid;
         return (
             <div style={{
                 // flex: 1 to fill vertical space in the column segment
@@ -86,7 +87,7 @@ export const Column: React.FC<ColumnProps> = ({
                         height: '90%'
                     }}>
                         {slot.status === 'OCCUPIED' && slot.card && (
-                            <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} />
+                            <BoardCard card={slot.card} isFaceUp={slot.isFaceUp} canViewDetails={canViewDetails} />
                         )}
                     </div>
                 </div>
@@ -120,42 +121,39 @@ export const Column: React.FC<ColumnProps> = ({
                 <>
                     {/* Player 0 Area (Top) */}
                     <div style={{ ...playerSectionStyle, borderColor: 'blue' }}>
-                        {renderSlot(p0.rear, 'P0 Rear')}
-                        {renderSlot(p0.reserve, 'P0 Rsrv')}
-                        {renderSlot(p0.front, 'P0 Front')}
+                        {renderSlot(p0.rear, 'P0 Rear', '0')}
+                        {renderSlot(p0.reserve, 'P0 Rsrv', '0')}
+                        {renderSlot(p0.front, 'P0 Front', '0')}
                     </div>
                     {/* No Man's Land */}
                     <div style={{ flex: 0.2, minHeight: '10px', background: '#111', width: '100%', margin: '2px 0' }}></div>
                     {/* Player 1 Area (Bottom) */}
                     <div style={{ ...playerSectionStyle, borderColor: 'red' }}>
-                        {renderSlot(p1.front, 'P1 Front')}
-                        {renderSlot(p1.reserve, 'P1 Rsrv')}
-                        {renderSlot(p1.rear, 'P1 Rear')}
+                        {renderSlot(p1.front, 'P1 Front', '1')}
+                        {renderSlot(p1.reserve, 'P1 Rsrv', '1')}
+                        {renderSlot(p1.rear, 'P1 Rear', '1')}
                     </div>
                 </>
             ) : (
                 <>
                     {/* Player 1 Area (Top) */}
                     <div style={{ ...playerSectionStyle, borderColor: 'red' }}>
-                        {renderSlot(p1.rear, 'P1 Rear')}
-                        {renderSlot(p1.reserve, 'P1 Rsrv')}
-                        {renderSlot(p1.front, 'P1 Front')}
+                        {renderSlot(p1.rear, 'P1 Rear', '1')}
+                        {renderSlot(p1.reserve, 'P1 Rsrv', '1')}
+                        {renderSlot(p1.front, 'P1 Front', '1')}
                     </div>
                     {/* No Man's Land */}
                     <div style={{ flex: 0.2, minHeight: '10px', background: '#111', width: '100%', margin: '2px 0' }}></div>
                     {/* Player 0 Area (Bottom) */}
                     <div style={{ ...playerSectionStyle, borderColor: 'blue' }}>
-                        {renderSlot(p0.front, 'P0 Front')}
-                        {renderSlot(p0.reserve, 'P0 Rsrv')}
-                        {renderSlot(p0.rear, 'P0 Rear')}
+                        {renderSlot(p0.front, 'P0 Front', '0')}
+                        {renderSlot(p0.reserve, 'P0 Rsrv', '0')}
+                        {renderSlot(p0.rear, 'P0 Rear', '0')}
                     </div>
                 </>
             )}
 
-            {/* Controls Overlay? Or just at bottom? 
-                If we put controls *inside* this column, they consume vertical space.
-                Let's make them overlay or small footprint.
-            */}
+            {/* Controls Overlay */}
             {isMyTurn && (
                 <div style={{
                     marginTop: '5px',
