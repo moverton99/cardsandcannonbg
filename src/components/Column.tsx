@@ -2,6 +2,7 @@ import React from 'react';
 import { BoardCard } from './BoardCard';
 import { LAYOUT } from '../UI/styles';
 import { Slot, PHASES, PlayerID, Column as GameColumn, Card } from '../Game/types';
+import { getCardDetails } from '../UI/cardDetails';
 
 interface ColumnProps {
     colId: string;
@@ -15,6 +16,7 @@ interface ColumnProps {
     onAdvance: (colId: string) => void;
     onShip: (colId: string) => void;
     onPlayEvent: (idx: number) => void;
+    onPrimaryAction: (colId: string, choiceId?: string) => void;
     shouldFlip?: boolean;
 }
 
@@ -30,6 +32,7 @@ export const Column: React.FC<ColumnProps> = ({
     onAdvance,
     onShip,
     onPlayEvent,
+    onPrimaryAction,
     shouldFlip = false
 }) => {
     // P1 Pipeline
@@ -40,6 +43,11 @@ export const Column: React.FC<ColumnProps> = ({
     const isFull = myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'OCCUPIED';
 
     const selectedEventCard = selectedCardIndex !== null && hand[selectedCardIndex]?.type === 'EVENT' ? hand[selectedCardIndex] : null;
+
+    // Helper to get my front unit details
+    const myFrontCard = myCol.front.card;
+    const myFrontDetails = myFrontCard ? getCardDetails(myFrontCard) : null;
+    const canEngage = isMyTurn && currentPhase === PHASES.ENGAGEMENT && myCol.front.status === 'OCCUPIED' && myCol.front.isOperational;
 
     const renderSlot = (slot: Slot, label: string, ownerPid: PlayerID) => {
         const canViewDetails = effectivePlayerID === ownerPid;
@@ -180,6 +188,29 @@ export const Column: React.FC<ColumnProps> = ({
                                 Advance
                             </button>
                         )
+                    )}
+
+                    {canEngage && myFrontDetails && 'primary_action' in myFrontDetails && myFrontDetails.primary_action && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            {myFrontDetails.primary_action.choice ? (
+                                myFrontDetails.primary_action.choice.options.map(opt => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => onPrimaryAction(colId, opt.id)}
+                                        style={{ width: '100%', padding: '5px', background: '#882222', color: 'white', cursor: 'pointer' }}
+                                    >
+                                        {opt.id}
+                                    </button>
+                                ))
+                            ) : (
+                                <button
+                                    onClick={() => onPrimaryAction(colId)}
+                                    style={{ width: '100%', padding: '5px', background: '#882222', color: 'white', cursor: 'pointer' }}
+                                >
+                                    Engage
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     {currentPhase === PHASES.COMMITMENT && (

@@ -502,7 +502,7 @@ const SetNextCard: Move<GameState> = ({ G }, cardId: string) => {
     G.nextCardId = cardId;
 };
 
-const GenericPrimaryAction: Move<GameState> = ({ G, ctx, events }, columnId: string) => {
+const GenericPrimaryAction: Move<GameState> = ({ G, ctx, events }, columnId: string, choiceId?: string) => {
     const playerID = ctx.currentPlayer as PlayerID;
     const pCol = G.columns[columnId as keyof typeof G.columns].players[playerID];
     if (pCol.front.status !== 'OCCUPIED' || !pCol.front.isOperational) return INVALID_MOVE;
@@ -510,11 +510,19 @@ const GenericPrimaryAction: Move<GameState> = ({ G, ctx, events }, columnId: str
     const unitDef = UNITS[pCol.front.card!.defId];
     if (!unitDef || !unitDef.primary_action) return INVALID_MOVE;
 
-    // Resolve
-    if (unitDef.primary_action.effects) {
-        resolveEffects(G, ctx, unitDef.primary_action.effects, playerID, columnId);
+    // Handle Choice
+    if (unitDef.primary_action.choice) {
+        if (!choiceId) return INVALID_MOVE; // Choice required
+        const option = unitDef.primary_action.choice.options.find(o => o.id === choiceId);
+        if (!option) return INVALID_MOVE;
+        resolveEffects(G, ctx, option.effects, playerID, columnId);
     }
-    // TODO: Handle Choice
+    // Handle Simple Effects
+    else if (unitDef.primary_action.effects) {
+        resolveEffects(G, ctx, unitDef.primary_action.effects, playerID, columnId);
+    } else {
+        return INVALID_MOVE;
+    }
 
     pCol.front.isOperational = false;
     checkAutoAdvance(G, ctx, events);

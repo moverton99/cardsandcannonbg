@@ -79,6 +79,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     moves.PlayEvent(idx, colId);
                     setSelectedCardIndex(null);
                 }}
+                onPrimaryAction={(colId, choiceId) => moves.PrimaryAction(colId, choiceId)}
                 shouldFlip={shouldFlip}
             />
         );

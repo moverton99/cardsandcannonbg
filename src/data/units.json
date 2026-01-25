@@ -190,38 +190,33 @@
       "primary_action": {
         "timing": "EngagementPhase",
         "require_state": "Operational",
-        "effects": [
-          {
-            "action": "choose_effect",
-            "params": {
-              "chooser": "target_controller",
-              "options": [
+        "choice": {
+          "chooser": "controller",
+          "options": [
+            {
+              "id": "Destroy",
+              "effects": [
                 {
-                  "id": "Destroy",
-                  "effects": [
-                    {
-                      "action": "Destroy",
-                      "params": {
-                        "target": "opponent_asset_at_same_front"
-                      }
-                    }
-                  ]
-                },
+                  "action": "Destroy",
+                  "params": {
+                    "target": "opponent_asset_at_same_front"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "Withdraw",
+              "effects": [
                 {
-                  "id": "Withdraw",
-                  "effects": [
-                    {
-                      "action": "Withdraw",
-                      "params": {
-                        "target": "opponent_asset_at_same_front"
-                      }
-                    }
-                  ]
+                  "action": "Withdraw",
+                  "params": {
+                    "target": "opponent_asset_at_same_front"
+                  }
                 }
               ]
             }
-          }
-        ]
+          ]
+        }
       }
     }
   ]
