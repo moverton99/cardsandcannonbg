@@ -185,40 +185,16 @@
       "id": "heavy_cannon",
       "name": "Heavy Cannon",
       "weight": "Heavy",
-      "card text": "When this unit is ready, you may destroy an opponent asset at the same front, or withdraw an opponent asset at the same front.",
+      "card text": "When this unit is ready, destroy a Light or Medium opponent asset at the same front. If the asset is Heavy, withdraw it instead.",
       "activate": null,
       "primary_action": {
         "timing": "EngagementPhase",
         "require_state": "Operational",
         "effects": [
           {
-            "action": "choose_effect",
+            "action": "destroy_or_withdraw",
             "params": {
-              "chooser": "target_controller",
-              "options": [
-                {
-                  "id": "Destroy",
-                  "effects": [
-                    {
-                      "action": "Destroy",
-                      "params": {
-                        "target": "opponent_asset_at_same_front"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "id": "Withdraw",
-                  "effects": [
-                    {
-                      "action": "Withdraw",
-                      "params": {
-                        "target": "opponent_asset_at_same_front"
-                      }
-                    }
-                  ]
-                }
-              ]
+              "target": "opponent_asset_at_same_front"
             }
           }
         ]

@@ -29,6 +29,7 @@ export type Verb =
     | 'has_preparation'
     | 'choose_effect'
     | 'triggered_effect'
+    | 'destroy_or_withdraw'
     | 'choose_one_or_none';
 
 export interface ActionDef {

@@ -16,7 +16,8 @@ interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID }) => {
-    const [showTurnTransition, setShowTurnTransition] = React.useState(false);
+    const [transitionStage, setTransitionStage] = React.useState<'IDLE' | 'FADING_OUT' | 'FADING_IN'>('IDLE');
+    const [perspectivePlayerID, setPerspectivePlayerID] = React.useState(ctx.currentPlayer);
     const prevPlayerRef = React.useRef(ctx.currentPlayer);
 
     const {
@@ -29,15 +30,43 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         currentPhase,
         me,
         handLimitExceeded
-    } = useBoardUI({ G, ctx, playerID });
+    } = useBoardUI({ G, ctx: { ...ctx, currentPlayer: perspectivePlayerID }, playerID });
 
     React.useEffect(() => {
+        let t1: ReturnType<typeof setTimeout>;
+        let t2: ReturnType<typeof setTimeout>;
+        let t3: ReturnType<typeof setTimeout>;
+
         if (prevPlayerRef.current !== ctx.currentPlayer) {
-            setShowTurnTransition(true);
-            const timer = setTimeout(() => setShowTurnTransition(false), 2000);
+            console.log(`[Board] Player Change Detected: ${prevPlayerRef.current} -> ${ctx.currentPlayer}`);
+
+            // 1. Pause for 1 second
+            t1 = setTimeout(() => {
+                console.log('[Board] Transition: FADING_OUT (Start Darkening)');
+                setTransitionStage('FADING_OUT');
+            }, 1000);
+
+            // 2. Swap board after fade out (1s pause + 1.2s fade)
+            t2 = setTimeout(() => {
+                console.log('[Board] Transition: FADING_IN (Swap & Start Revealing)');
+                setPerspectivePlayerID(ctx.currentPlayer);
+                setTransitionStage('FADING_IN');
+            }, 2200);
+
+            // 3. End transition after fade in (1s pause + 1.2s fade + 1s fade)
+            t3 = setTimeout(() => {
+                console.log('[Board] Transition: IDLE (Done)');
+                setTransitionStage('IDLE');
+            }, 3200);
+
             prevPlayerRef.current = ctx.currentPlayer;
-            return () => clearTimeout(timer);
         }
+
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+        };
     }, [ctx.currentPlayer]);
 
     const handleAdvance = (colId: string) => {
@@ -57,7 +86,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
 
 
 
-    const shouldFlip = ctx.currentPlayer === '1';
+    const shouldFlip = perspectivePlayerID === '1';
     const displayedColumns = shouldFlip ? [...COLUMNS].reverse() : COLUMNS;
 
     const DRAW_BUTTON_STYLE: React.CSSProperties = {
@@ -85,6 +114,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 selectedCardIndex={selectedCardIndex}
                 hand={G.players[effectivePlayerID as PlayerID].hand}
                 hasShipped={G.hasShipped}
+                hasMovedLogistics={G.hasMovedLogistics}
                 onAdvance={handleAdvance}
                 onShip={handleShip}
                 onPlayEvent={(idx) => {
@@ -191,11 +221,11 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     <div style={{
                         fontSize: '2.8em',
                         fontWeight: '900',
-                        color: ctx.currentPlayer === '0' ? '#3b82f6' : '#ef4444',
+                        color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
                         textShadow: '0 0 20px rgba(0,0,0,0.4)',
                         lineHeight: '1'
                     }}>
-                        PLAYER {ctx.currentPlayer}
+                        PLAYER {perspectivePlayerID}
                     </div>
                 </div>
 
@@ -240,11 +270,11 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     <div style={{
                         fontSize: '2.5em',
                         fontWeight: '900',
-                        color: ctx.currentPlayer === '0' ? '#3b82f6' : '#ef4444',
+                        color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
                         textShadow: '0 0 20px rgba(0,0,0,0.4)',
                         lineHeight: '1'
                     }}>
-                        {currentPhase.toUpperCase()}
+                        {(currentPhase || '').toUpperCase()}
                     </div>
                 </div>
             </div>
@@ -372,34 +402,45 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
             </div>
 
             {/* Discard Carousel Popup */}
-            {viewingDiscardPile !== null && (
-                <DiscardOverlay
-                    pid={viewingDiscardPile}
-                    pile={G.players[viewingDiscardPile].discardPile}
-                    onClose={() => setViewingDiscardPile(null)}
-                />
-            )}
+            {
+                viewingDiscardPile !== null && (
+                    <DiscardOverlay
+                        pid={viewingDiscardPile}
+                        pile={G.players[viewingDiscardPile].discardPile}
+                        onClose={() => setViewingDiscardPile(null)}
+                    />
+                )
+            }
 
             {/* Turn Transition Overlay */}
-            {showTurnTransition && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    background: '#000',
-                    zIndex: 10000,
-                    pointerEvents: 'none', // Allow clicks after it starts fading or just block them briefly
-                    animation: 'fadeOut 1.6s forwards'
-                }} />
-            )}
+            {
+                transitionStage !== 'IDLE' && (
+                    <div
+                        key={transitionStage} // Force restart of animation on stage change
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            background: '#000',
+                            zIndex: 10001, // Increased zIndex just in case
+                            pointerEvents: 'none',
+                            animation: transitionStage === 'FADING_OUT'
+                                ? 'fadeIn 1.2s forwards'
+                                : 'fadeOut 1s forwards'
+                        }} />
+                )
+            }
 
             <style>{`
                 @keyframes fadeOut {
                     0% { opacity: 1; }
-                    50% { opacity: 1; }
                     100% { opacity: 0; }
+                }
+                @keyframes fadeIn {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
                 }
                 @keyframes pulse {
                     0% { opacity: 0.5; box-shadow: 0 0 5px yellow; }
@@ -411,6 +452,6 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     to { opacity: 1; }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };

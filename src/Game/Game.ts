@@ -410,6 +410,30 @@ const VERBS: Record<string, VerbFn> = {
                 else pCol.front.tokens = Math.max(0, pCol.front.tokens - (params.amount || 0));
             }
         }
+    },
+    destroy_or_withdraw: (G, _ctx, params, playerID) => {
+        const colId = params.contextColumnId;
+        if (!colId) return;
+
+        const oppID = playerID === '0' ? '1' : '0';
+        const oppFront = G.columns[colId as keyof typeof G.columns].players[oppID].front;
+
+        if (oppFront.status === 'OCCUPIED' && oppFront.card) {
+            const unitDef = UNITS[oppFront.card.defId];
+            if (unitDef) {
+                if (unitDef.weight === 'Heavy') {
+                    // Withdraw
+                    G.players[oppID].hand.push(oppFront.card);
+                    G.columns[colId as keyof typeof G.columns].players[oppID].front = createSlot();
+                    checkOverrun(G, colId);
+                } else {
+                    // Destroy (Light or Medium)
+                    G.players[oppID].discardPile.push(oppFront.card);
+                    G.columns[colId as keyof typeof G.columns].players[oppID].front = createSlot();
+                    checkOverrun(G, colId);
+                }
+            }
+        }
     }
 };
 

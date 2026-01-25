@@ -13,6 +13,7 @@ interface ColumnProps {
     selectedCardIndex: number | null;
     hand: Card[];
     hasShipped: boolean;
+    hasMovedLogistics: boolean;
     onAdvance: (colId: string) => void;
     onShip: (colId: string) => void;
     onPlayEvent: (idx: number) => void;
@@ -29,6 +30,7 @@ export const Column: React.FC<ColumnProps> = ({
     selectedCardIndex,
     hand,
     hasShipped,
+    hasMovedLogistics,
     onAdvance,
     onShip,
     onPlayEvent,
@@ -40,7 +42,6 @@ export const Column: React.FC<ColumnProps> = ({
     // P0 Pipeline
     const p0 = col.players['0'];
     const myCol = col.players[effectivePlayerID as PlayerID];
-    const isFull = myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'OCCUPIED';
 
     const selectedEventCard = selectedCardIndex !== null && hand[selectedCardIndex]?.type === 'EVENT' ? hand[selectedCardIndex] : null;
 
@@ -50,6 +51,11 @@ export const Column: React.FC<ColumnProps> = ({
     const oppID = effectivePlayerID === '0' ? '1' : '0';
     const oppCol = col.players[oppID];
     const canEngage = isMyTurn && currentPhase === PHASES.ENGAGEMENT && myCol.front.status === 'OCCUPIED' && myCol.front.isOperational && oppCol.front.status === 'OCCUPIED';
+
+    const canAdvanceInColumn = (myCol.rear.status === 'OCCUPIED' && myCol.reserve.status === 'EMPTY') ||
+        (myCol.reserve.status === 'OCCUPIED' && myCol.front.status === 'EMPTY');
+
+    const advanceDisabled = hasMovedLogistics || !canAdvanceInColumn;
 
     const renderSlot = (slot: Slot, label: string, ownerPid: PlayerID) => {
         const canViewDetails = effectivePlayerID === ownerPid;
@@ -104,7 +110,7 @@ export const Column: React.FC<ColumnProps> = ({
 
                 {slot.status === 'OCCUPIED' && label.toLowerCase().includes('front') && (
                     <div
-                        title={slot.isOperational ? 'Ready' : 'Arrived'}
+                        title={slot.isOperational ? 'Operational' : 'Exposed'}
                         style={{
                             position: 'absolute',
                             bottom: '5px',
@@ -200,8 +206,8 @@ export const Column: React.FC<ColumnProps> = ({
                         ) : (
                             <button
                                 onClick={() => onAdvance(colId)}
-                                disabled={isFull}
-                                style={{ width: '100%', padding: '5px', cursor: isFull ? 'default' : 'pointer' }}
+                                disabled={advanceDisabled}
+                                style={{ width: '100%', padding: '5px', cursor: advanceDisabled ? 'default' : 'pointer' }}
                             >
                                 Advance
                             </button>
