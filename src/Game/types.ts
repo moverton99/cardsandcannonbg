@@ -83,6 +83,7 @@ export interface Card {
     id: string; // Instance ID
     type: 'UNIT' | 'EVENT';
     defId: string; // Link to JSON definition (unitId or eventId)
+    ownerID: PlayerID;
 }
 
 export interface Slot {

@@ -104,7 +104,7 @@ function checkAutoAdvance(G: GameState, ctx: any, events: any) {
     }
 }
 
-const generateDeck = (): Card[] => {
+const generateDeck = (ownerID: PlayerID): Card[] => {
     const deck: Card[] = [];
 
     // Add Units
@@ -113,7 +113,8 @@ const generateDeck = (): Card[] => {
             deck.push({
                 id: `unit_${id}_${Math.random().toString(36).substr(2, 9)}`,
                 type: 'UNIT',
-                defId: id
+                defId: id,
+                ownerID
             });
         }
     });
@@ -124,7 +125,8 @@ const generateDeck = (): Card[] => {
             deck.push({
                 id: `event_${id}_${Math.random().toString(36).substr(2, 9)}`,
                 type: 'EVENT',
-                defId: id
+                defId: id,
+                ownerID
             });
         }
     });
@@ -568,8 +570,8 @@ export const CardsAndCannon: Game<GameState> = {
             };
         });
 
-        const p0Deck = generateDeck();
-        const p1Deck = generateDeck();
+        const p0Deck = generateDeck('0');
+        const p1Deck = generateDeck('1');
         const STARTING_HAND_SIZE = deckData.deck.starting_hand_size;
 
         const p0Hand = p0Deck.splice(-STARTING_HAND_SIZE);
