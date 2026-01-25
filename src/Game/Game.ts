@@ -104,14 +104,18 @@ function checkAutoAdvance(G: GameState, ctx: any, events: any) {
     }
 }
 
-const generateDeck = (ownerID: PlayerID): Card[] => {
+const generateDeck = (random: any, ownerID: PlayerID): Card[] => {
     const deck: Card[] = [];
+
+    if (!random) {
+        console.error("random API is not available! Deck generation will fail/be non-deterministic.");
+    }
 
     // Add Units
     Object.entries(deckData.deck.composition.units).forEach(([id, count]) => {
         for (let i = 0; i < count; i++) {
             deck.push({
-                id: `unit_${id}_${Math.random().toString(36).substr(2, 9)}`,
+                id: `unit_${id}_${random!.Number().toString(36).substr(2, 9)}`,
                 type: 'UNIT',
                 defId: id,
                 ownerID
@@ -123,7 +127,7 @@ const generateDeck = (ownerID: PlayerID): Card[] => {
     Object.entries(deckData.deck.composition.events).forEach(([id, count]) => {
         for (let i = 0; i < count; i++) {
             deck.push({
-                id: `event_${id}_${Math.random().toString(36).substr(2, 9)}`,
+                id: `event_${id}_${random!.Number().toString(36).substr(2, 9)}`,
                 type: 'EVENT',
                 defId: id,
                 ownerID
@@ -131,13 +135,8 @@ const generateDeck = (ownerID: PlayerID): Card[] => {
         }
     });
 
-    // Shuffle (Fisher-Yates)
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-
-    return deck;
+    // Shuffle (using boardgame.io deterministic shuffle)
+    return random!.Shuffle(deck);
 };
 
 // --- Verb Implementations ---
@@ -168,7 +167,7 @@ const VERBS: Record<string, VerbFn> = {
             }
         }
     },
-    enforce_hand_limit: (G, _ctx, params, playerID) => {
+    enforce_hand_limit: (_G, _ctx, _params, _playerID) => {
         // const player = G.players[playerID];
         // const max = params.max || MAX_HAND_SIZE;
         // while (player.hand.length > max) {
@@ -557,7 +556,7 @@ const GenericPrimaryAction: Move<GameState> = ({ G, ctx, events }, columnId: str
 // --- Game Object ---
 
 export const CardsAndCannon: Game<GameState> = {
-    setup: (): GameState => {
+    setup: ({ random }): GameState => {
         const columns: any = {};
         COLUMNS.forEach(colId => {
             const id = colId as ColumnId;
@@ -570,8 +569,8 @@ export const CardsAndCannon: Game<GameState> = {
             };
         });
 
-        const p0Deck = generateDeck('0');
-        const p1Deck = generateDeck('1');
+        const p0Deck = generateDeck(random, '0');
+        const p1Deck = generateDeck(random, '1');
         const STARTING_HAND_SIZE = deckData.deck.starting_hand_size;
 
         const p0Hand = p0Deck.splice(-STARTING_HAND_SIZE);
@@ -588,7 +587,7 @@ export const CardsAndCannon: Game<GameState> = {
             hasShipped: false,
             assetsEnteredFront: [],
             frontsControlledStartTurn: [],
-        };
+        } as GameState;
     },
 
     endIf: ({ G }) => {
@@ -603,6 +602,7 @@ export const CardsAndCannon: Game<GameState> = {
     turn: {
         order: TurnOrder.DEFAULT,
         onBegin: ({ G, ctx, events }) => {
+
             G.hasDrawnCard = false;
             G.hasShipped = false;
             G.hasMovedLogistics = false;
