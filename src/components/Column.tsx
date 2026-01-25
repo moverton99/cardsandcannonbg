@@ -47,7 +47,9 @@ export const Column: React.FC<ColumnProps> = ({
     // Helper to get my front unit details
     const myFrontCard = myCol.front.card;
     const myFrontDetails = myFrontCard ? getCardDetails(myFrontCard) : null;
-    const canEngage = isMyTurn && currentPhase === PHASES.ENGAGEMENT && myCol.front.status === 'OCCUPIED' && myCol.front.isOperational;
+    const oppID = effectivePlayerID === '0' ? '1' : '0';
+    const oppCol = col.players[oppID];
+    const canEngage = isMyTurn && currentPhase === PHASES.ENGAGEMENT && myCol.front.status === 'OCCUPIED' && myCol.front.isOperational && oppCol.front.status === 'OCCUPIED';
 
     const renderSlot = (slot: Slot, label: string, ownerPid: PlayerID) => {
         const canViewDetails = effectivePlayerID === ownerPid;
