@@ -34,7 +34,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     React.useEffect(() => {
         if (prevPlayerRef.current !== ctx.currentPlayer) {
             setShowTurnTransition(true);
-            const timer = setTimeout(() => setShowTurnTransition(false), 1000);
+            const timer = setTimeout(() => setShowTurnTransition(false), 2000);
             prevPlayerRef.current = ctx.currentPlayer;
             return () => clearTimeout(timer);
         }
@@ -391,7 +391,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     background: '#000',
                     zIndex: 10000,
                     pointerEvents: 'none', // Allow clicks after it starts fading or just block them briefly
-                    animation: 'fadeOut 0.8s forwards'
+                    animation: 'fadeOut 1.6s forwards'
                 }} />
             )}
 
