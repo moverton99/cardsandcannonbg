@@ -30,6 +30,20 @@ const createSlot = (): Slot => ({
     tokens: 0,
 });
 
+function getControlledFronts(G: GameState, pid: PlayerID): ColumnId[] {
+    return COLUMNS.filter(id => {
+        const pCol = G.columns[id].players[pid];
+        const oppID = pid === '0' ? '1' : '0';
+        const oCol = G.columns[id].players[oppID];
+        // Control: Operational Asset at Front AND opponent has no Asset at Front.
+        return pCol.front.status === 'OCCUPIED' && pCol.front.isOperational && oCol.front.status === 'EMPTY';
+    });
+}
+
+function awardBreakthrough(G: GameState, pid: PlayerID, count: number = 1) {
+    G.players[pid].breakthroughTokens += count;
+}
+
 function hasMovementOptions(G: GameState, pid: PlayerID): boolean {
     const canAdvance = COLUMNS.some(id => {
         const pCol = G.columns[id as ColumnId].players[pid];
@@ -42,6 +56,7 @@ function hasMovementOptions(G: GameState, pid: PlayerID): boolean {
     });
     return canAdvance || canWithdraw;
 }
+
 
 
 
@@ -342,6 +357,12 @@ const VERBS: Record<string, VerbFn> = {
                 if (params.allowed_target_weights && !params.allowed_target_weights.includes(unitDef.weight)) return;
                 if (params.disallowed_target_weights && params.disallowed_target_weights.includes(unitDef.weight)) return;
 
+                // DECISIVE BREACH CHECK
+                if (G.frontsControlledStartTurn.includes(colId as string)) {
+                    console.log(`[Breakthrough] Decisive Breach by Player ${playerID} in ${colId}`);
+                    awardBreakthrough(G, playerID);
+                }
+
                 // Execute Destroy
                 G.players[oppID].discardPile.push(oppFront.card!);
                 G.columns[colId as keyof typeof G.columns].players[oppID].front = createSlot();
@@ -355,6 +376,12 @@ const VERBS: Record<string, VerbFn> = {
             const oppID = playerID === '0' ? '1' : '0';
             const oppFront = G.columns[colId as keyof typeof G.columns].players[oppID].front;
             if (oppFront.status === 'OCCUPIED') {
+                // DECISIVE BREACH CHECK
+                if (G.frontsControlledStartTurn.includes(colId as string)) {
+                    console.log(`[Breakthrough] Decisive Breach (Withdraw) by Player ${playerID} in ${colId}`);
+                    awardBreakthrough(G, playerID);
+                }
+
                 G.players[oppID].hand.push(oppFront.card!);
                 G.columns[colId as keyof typeof G.columns].players[oppID].front = createSlot();
                 checkOverrun(G, colId as string);
@@ -431,6 +458,20 @@ function checkOverrun(G: GameState, colId: string) {
 }
 
 const resolveEffects = (G: GameState, ctx: Ctx, effects: ActionDef[], playerID: PlayerID, contextColumnId?: string) => {
+    // ESCALATION CHECK
+    const player = G.players[playerID];
+    if (!player.hasResolvedHeavyPrimary && contextColumnId) {
+        const pCol = G.columns[contextColumnId as keyof typeof G.columns].players[playerID];
+        if (pCol.front.status === 'OCCUPIED' && pCol.front.card) {
+            const unitDef = UNITS[pCol.front.card.defId];
+            if (unitDef && unitDef.weight === 'Heavy') {
+                console.log(`[Breakthrough] Escalation by Player ${playerID}`);
+                awardBreakthrough(G, playerID);
+                player.hasResolvedHeavyPrimary = true;
+            }
+        }
+    }
+
     effects.forEach(def => {
         const verb = def.action;
         const fn = VERBS[verb as string];
@@ -447,12 +488,7 @@ const resolveEffects = (G: GameState, ctx: Ctx, effects: ActionDef[], playerID: 
 
 // --- Moves ---
 
-const DrawCard: Move<GameState> = ({ G, ctx, events }, amount: number = 1) => {
-    VERBS.draw_cards(G, ctx, { amount }, ctx.currentPlayer as PlayerID);
-    if (G.players[ctx.currentPlayer as PlayerID].hand.length <= MAX_HAND_SIZE) {
-        events.endPhase();
-    }
-};
+
 
 const DiscardCard: Move<GameState> = ({ G, ctx, events }, cardIndex: number) => {
     const player = G.players[ctx.currentPlayer as PlayerID];
@@ -495,7 +531,11 @@ const Withdraw: Move<GameState> = ({ G, ctx, events: _events }, columnId: string
 };
 
 const Deploy: Move<GameState> = ({ G, ctx, events }, columnId: string, cardIndex: number) => {
-    if (G.hasShipped) return INVALID_MOVE;
+    console.log(`[Move: Ship] col=${columnId}, cardIdx=${cardIndex}, hasShipped=${G.hasShipped}`);
+    if (G.hasShipped) {
+        console.warn("[Move: Ship] Already shipped this turn");
+        return INVALID_MOVE;
+    }
     VERBS.deploy_from_hand(G, ctx, { columnId, cardIndex }, ctx.currentPlayer as PlayerID);
     G.hasShipped = true;
     events.endTurn();
@@ -556,8 +596,8 @@ export const CardsAndCannon: Game<GameState> = {
         return {
             columns,
             players: {
-                '0': { hand: p0Hand, deck: p0Deck, discardPile: [], breakthroughTokens: 0 },
-                '1': { hand: p1Hand, deck: p1Deck, discardPile: [], breakthroughTokens: 0 },
+                '0': { hand: p0Hand, deck: p0Deck, discardPile: [], breakthroughTokens: 0, hasResolvedHeavyPrimary: false },
+                '1': { hand: p1Hand, deck: p1Deck, discardPile: [], breakthroughTokens: 0, hasResolvedHeavyPrimary: false },
             },
             hasDrawnCard: false,
             hasMovedLogistics: false,
@@ -581,10 +621,27 @@ export const CardsAndCannon: Game<GameState> = {
         activePlayers: {
             currentPlayer: PHASES.SUPPLY
         },
-        onBegin: ({ G }) => {
+        onBegin: ({ G, ctx, events: _events }) => {
             G.hasDrawnCard = false;
             G.hasShipped = false;
             G.hasMovedLogistics = false;
+
+            const pid = ctx.currentPlayer as PlayerID;
+            const oppID = pid === '0' ? '1' : '0';
+
+            // Start of turn front control recording (for Decisive Breach)
+            G.frontsControlledStartTurn = getControlledFronts(G, oppID);
+
+            // COLLAPSE CHECK
+            const opp = G.players[oppID];
+            const hasAssets = COLUMNS.some(id => {
+                const col = G.columns[id as ColumnId].players[oppID];
+                return col.front.status === 'OCCUPIED' || col.reserve.status === 'OCCUPIED' || col.rear.status === 'OCCUPIED';
+            });
+            if (!hasAssets && opp.hand.length === 0) {
+                console.log(`[Breakthrough] Collapse of Player ${oppID}`);
+                awardBreakthrough(G, pid, 2); // Award double to win usually?
+            }
         },
         stages: {
             [PHASES.SUPPLY]: {

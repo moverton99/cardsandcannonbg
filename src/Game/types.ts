@@ -119,6 +119,7 @@ export interface GameState {
             deck: Card[];
             discardPile: Card[];
             breakthroughTokens: number;
+            hasResolvedHeavyPrimary: boolean;
         };
     };
     // Tracking for turn logic

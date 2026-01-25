@@ -29,7 +29,9 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         isMyTurn,
         currentPhase,
         me,
-        handLimitExceeded
+        handLimitExceeded,
+        breakthroughs,
+        frontControlCount
     } = useBoardUI({ G, ctx: { ...ctx, currentPlayer: perspectivePlayerID }, playerID });
 
     React.useEffect(() => {
@@ -74,6 +76,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
     };
 
     const handleShip = (colId: string) => {
+        console.log(`[Board] handleShip called for ${colId}, selectedCardIndex=${selectedCardIndex}`);
         if (selectedCardIndex !== null) {
             moves.Ship(colId, selectedCardIndex);
             setSelectedCardIndex(null);
@@ -223,9 +226,30 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         fontWeight: '900',
                         color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
                         textShadow: '0 0 20px rgba(0,0,0,0.4)',
-                        lineHeight: '1'
+                        lineHeight: '1',
+                        marginBottom: '20px'
                     }}>
                         PLAYER {perspectivePlayerID}
+                    </div>
+
+                    <div style={{
+                        fontSize: '0.9em',
+                        color: '#666',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '3px',
+                        marginBottom: '4px'
+                    }}>
+                        Breakthroughs
+                    </div>
+                    <div style={{
+                        fontSize: '2.8em',
+                        fontWeight: '900',
+                        color: '#eab308', // Gold for breakthroughs
+                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
+                        lineHeight: '1'
+                    }}>
+                        {breakthroughs}
                     </div>
                 </div>
 
@@ -272,9 +296,30 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         fontWeight: '900',
                         color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
                         textShadow: '0 0 20px rgba(0,0,0,0.4)',
-                        lineHeight: '1'
+                        lineHeight: '1',
+                        marginBottom: '20px'
                     }}>
                         {(currentPhase || '').toUpperCase()}
+                    </div>
+
+                    <div style={{
+                        fontSize: '0.9em',
+                        color: '#666',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '3px',
+                        marginBottom: '4px'
+                    }}>
+                        Front Control
+                    </div>
+                    <div style={{
+                        fontSize: '2.8em',
+                        fontWeight: '900',
+                        color: '#22c55e', // Green for control
+                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
+                        lineHeight: '1'
+                    }}>
+                        {frontControlCount}
                     </div>
                 </div>
             </div>
