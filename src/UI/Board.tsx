@@ -16,6 +16,9 @@ interface CardsAndCannonBoardProps extends BoardProps<GameState> { }
 
 
 export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playerID }) => {
+    const [showTurnTransition, setShowTurnTransition] = React.useState(false);
+    const prevPlayerRef = React.useRef(ctx.currentPlayer);
+
     const {
         selectedCardIndex,
         setSelectedCardIndex,
@@ -27,6 +30,15 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         me,
         handLimitExceeded
     } = useBoardUI({ G, ctx, playerID });
+
+    React.useEffect(() => {
+        if (prevPlayerRef.current !== ctx.currentPlayer) {
+            setShowTurnTransition(true);
+            const timer = setTimeout(() => setShowTurnTransition(false), 1000);
+            prevPlayerRef.current = ctx.currentPlayer;
+            return () => clearTimeout(timer);
+        }
+    }, [ctx.currentPlayer]);
 
     const handleAdvance = (colId: string) => {
         moves.Advance(colId);
@@ -368,7 +380,27 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 />
             )}
 
+            {/* Turn Transition Overlay */}
+            {showTurnTransition && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: '#000',
+                    zIndex: 10000,
+                    pointerEvents: 'none', // Allow clicks after it starts fading or just block them briefly
+                    animation: 'fadeOut 0.8s forwards'
+                }} />
+            )}
+
             <style>{`
+                @keyframes fadeOut {
+                    0% { opacity: 1; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
                 @keyframes pulse {
                     0% { opacity: 0.5; box-shadow: 0 0 5px yellow; }
                     50% { opacity: 1; box-shadow: 0 0 20px yellow; }
