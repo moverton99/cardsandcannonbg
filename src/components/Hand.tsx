@@ -33,8 +33,7 @@ export const Hand: React.FC<HandProps> = ({
             alignItems: 'center',
             opacity: isDisabled ? 0.5 : 1,
             pointerEvents: isDisabled ? 'none' : 'auto',
-            width: '100%',
-            maxWidth: '95vw'
+            width: '100%'
         }}>
             <div style={{
                 display: 'flex',

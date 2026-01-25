@@ -253,25 +253,85 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 {/* Info & Controls Bar */}
                 <div style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    justifyContent: 'center', // Center the buttons
                     alignItems: 'center',
-                    padding: '5px 20px',
+                    padding: '10px 20px',
                     fontSize: '0.8em',
                     color: '#aaa',
-                    borderBottom: '1px solid #222'
+                    borderBottom: '1px solid #222',
+                    position: 'relative' // For absolute positioning of debug if needed
                 }}>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        {currentPhase === PHASES.LOGISTICS && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>Pass Logistics</button>}
-                        {currentPhase === PHASES.ENGAGEMENT && <button style={{ padding: '4px 8px', cursor: 'pointer' }} onClick={() => moves.Pass()}>End Engagement</button>}
-                        {currentPhase === PHASES.COMMITMENT && <button style={{ padding: '4px 8px', cursor: 'pointer', background: '#444', color: '#eee' }} onClick={() => moves.Pass()}>Skip Deployment</button>}
+                    <div style={{
+                        display: 'flex',
+                        gap: '15px',
+                        justifyContent: 'center',
+                        flex: 1
+                    }}>
+                        {currentPhase === PHASES.LOGISTICS && (
+                            <button
+                                style={{
+                                    padding: '8px 16px',
+                                    cursor: 'pointer',
+                                    background: '#1a1a1a',
+                                    color: '#eab308',
+                                    border: '2px solid #eab308',
+                                    borderRadius: '4px',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    transition: 'all 0.2s'
+                                }}
+                                onClick={() => moves.Pass()}
+                            >
+                                Pass Logistics
+                            </button>
+                        )}
+                        {currentPhase === PHASES.ENGAGEMENT && (
+                            <button
+                                style={{
+                                    padding: '8px 16px',
+                                    cursor: 'pointer',
+                                    background: '#1a1a1a',
+                                    color: '#eab308',
+                                    border: '2px solid #eab308',
+                                    borderRadius: '4px',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    transition: 'all 0.2s'
+                                }}
+                                onClick={() => moves.Pass()}
+                            >
+                                End Engagement
+                            </button>
+                        )}
+                        {currentPhase === PHASES.COMMITMENT && (
+                            <button
+                                style={{
+                                    padding: '8px 16px',
+                                    cursor: 'pointer',
+                                    background: '#1a1a1a',
+                                    color: '#eab308',
+                                    border: '2px solid #eab308',
+                                    borderRadius: '4px',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    transition: 'all 0.2s'
+                                }}
+                                onClick={() => moves.Pass()}
+                            >
+                                Skip Deployment
+                            </button>
+                        )}
                     </div>
 
-                    {/* Debug Input */}
-                    <div>
+                    {/* Debug Input (Kept aside) */}
+                    <div style={{ position: 'absolute', right: '20px' }}>
                         <input
                             type="text"
-                            placeholder="Next card..."
-                            style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '2px', width: '80px' }}
+                            placeholder="Next..."
+                            style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '4px', width: '60px', fontSize: '0.8em' }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     moves.SetNextCard((e.target as HTMLInputElement).value);
