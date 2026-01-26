@@ -608,11 +608,18 @@ export const CardsAndCannon: Game<GameState> = {
     },
 
     endIf: ({ G }) => {
-        if (G.players['0'].breakthroughTokens >= 3) {
-            return { winner: '0' };
-        }
-        if (G.players['1'].breakthroughTokens >= 3) {
-            return { winner: '1' };
+        for (const pid of ['0', '1'] as PlayerID[]) {
+            // Win Condition: Breakthroughs (at least 2)
+            if (G.players[pid].breakthroughTokens >= 2) {
+                return { winner: pid };
+            }
+
+            // Win Condition: Front Control (at least 2 fronts)
+            // Rules say "end_of_turn", but controlling 2 fronts is a dominant state.
+            // In boardgame.io endIf is checked after every move anyway.
+            if (getControlledFronts(G, pid).length >= 2) {
+                return { winner: pid };
+            }
         }
     },
 

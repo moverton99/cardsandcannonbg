@@ -478,6 +478,90 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 )
             }
 
+            {/* Game Over / Winner Overlay */}
+            {ctx.gameover && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 20000,
+                    animation: 'fadeIn 1.5s ease-out forwards',
+                    userSelect: 'none'
+                }}>
+                    <div style={{
+                        padding: '60px 100px',
+                        background: 'linear-gradient(135deg, #222, #111)',
+                        border: `4px solid ${ctx.gameover.winner === '0' ? '#3b82f6' : '#ef4444'}`,
+                        borderRadius: '20px',
+                        boxShadow: `0 0 50px ${ctx.gameover.winner === '0' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                        textAlign: 'center',
+                        animation: 'scaleUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                    }}>
+                        <div style={{
+                            fontSize: '1.5em',
+                            color: '#888',
+                            textTransform: 'uppercase',
+                            letterSpacing: '10px',
+                            marginBottom: '20px'
+                        }}>
+                            Victory
+                        </div>
+                        <div style={{
+                            fontSize: '5em',
+                            fontWeight: '900',
+                            color: ctx.gameover.winner === '0' ? '#3b82f6' : '#ef4444',
+                            textShadow: '0 0 30px rgba(0,0,0,0.5)',
+                            lineHeight: '1',
+                            marginBottom: '30px'
+                        }}>
+                            PLAYER {ctx.gameover.winner}
+                        </div>
+                        <div style={{
+                            fontSize: '1.2em',
+                            color: '#ccc',
+                            fontStyle: 'italic',
+                            maxWidth: '400px'
+                        }}>
+                            {G.players[ctx.gameover.winner as PlayerID].breakthroughTokens >= 2
+                                ? "Dominance achieved through strategic breakthroughs."
+                                : "Absolute control established over the fronts."}
+                        </div>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                marginTop: '40px',
+                                padding: '15px 40px',
+                                background: 'transparent',
+                                border: '2px solid #555',
+                                borderRadius: '30px',
+                                color: '#fff',
+                                fontSize: '1.1em',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.borderColor = '#fff';
+                                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.borderColor = '#555';
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                        >
+                            Play Again
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 @keyframes fadeOut {
                     0% { opacity: 1; }
@@ -486,6 +570,10 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                 @keyframes fadeIn {
                     0% { opacity: 0; }
                     100% { opacity: 1; }
+                }
+                @keyframes scaleUp {
+                    0% { opacity: 0; transform: scale(0.5); }
+                    100% { opacity: 1; transform: scale(1); }
                 }
                 @keyframes pulse {
                     0% { opacity: 0.5; box-shadow: 0 0 5px yellow; }
