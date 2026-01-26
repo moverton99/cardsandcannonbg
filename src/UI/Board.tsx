@@ -31,7 +31,8 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         me,
         handLimitExceeded,
         breakthroughs,
-        frontControlCount
+        frontControlCount,
+        turnNumber
     } = useBoardUI({ G, ctx: { ...ctx, currentPlayer: perspectivePlayerID }, playerID });
 
     React.useEffect(() => {
@@ -103,6 +104,15 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
         cursor: 'pointer',
         marginTop: '-15px',
         zIndex: 10
+    };
+
+    const LABEL_STYLE: React.CSSProperties = {
+        fontSize: '1.2em',
+        color: '#666',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '3px',
+        marginBottom: '4px'
     };
 
     const renderColumn = (colId: string) => {
@@ -200,7 +210,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     Actually, let's just place them explicitly.
                 */}
 
-                {/* Current Player Indicator */}
+                {/* Left Side: Turn and Phase */}
                 <div style={{
                     gridColumn: 1,
                     display: 'flex',
@@ -211,14 +221,21 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     textAlign: 'center',
                     userSelect: 'none'
                 }}>
+                    <div style={LABEL_STYLE}>
+                        Turn
+                    </div>
                     <div style={{
-                        fontSize: '0.9em',
-                        color: '#666',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '3px',
-                        marginBottom: '4px'
+                        fontSize: '3.2em',
+                        fontWeight: '900',
+                        color: '#fff',
+                        textShadow: '0 0 20px rgba(255,255,255,0.2)',
+                        lineHeight: '1',
+                        marginBottom: '20px'
                     }}>
+                        {turnNumber}
+                    </div>
+
+                    <div style={LABEL_STYLE}>
                         Current Turn
                     </div>
                     <div style={{
@@ -232,24 +249,17 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                         PLAYER {perspectivePlayerID}
                     </div>
 
-                    <div style={{
-                        fontSize: '0.9em',
-                        color: '#666',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '3px',
-                        marginBottom: '4px'
-                    }}>
-                        Breakthroughs
+                    <div style={LABEL_STYLE}>
+                        Phase
                     </div>
                     <div style={{
-                        fontSize: '2.8em',
+                        fontSize: '2.5em',
                         fontWeight: '900',
-                        color: '#eab308', // Gold for breakthroughs
+                        color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
                         textShadow: '0 0 20px rgba(0,0,0,0.4)',
                         lineHeight: '1'
                     }}>
-                        {breakthroughs}
+                        {(currentPhase || '').toUpperCase()}
                     </div>
                 </div>
 
@@ -270,7 +280,7 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     {shouldFlip ? renderSideload('1') : renderSideload('0')}
                 </div>
 
-                {/* Phase Indicator */}
+                {/* Right Side: Game Stats (Both Players) */}
                 <div style={{
                     gridColumn: 7,
                     display: 'flex',
@@ -279,47 +289,49 @@ export const Board: React.FC<CardsAndCannonBoardProps> = ({ ctx, G, moves, playe
                     alignItems: 'center',
                     padding: '20px',
                     textAlign: 'center',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    gap: '20px'
                 }}>
-                    <div style={{
-                        fontSize: '0.9em',
-                        color: '#666',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '3px',
-                        marginBottom: '4px'
-                    }}>
-                        Phase
-                    </div>
-                    <div style={{
-                        fontSize: '2.5em',
-                        fontWeight: '900',
-                        color: perspectivePlayerID === '0' ? '#3b82f6' : '#ef4444',
-                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
-                        lineHeight: '1',
-                        marginBottom: '20px'
-                    }}>
-                        {(currentPhase || '').toUpperCase()}
+                    {/* Breakthroughs Section */}
+                    <div>
+                        <div style={{ ...LABEL_STYLE, marginBottom: '8px' }}>
+                            Breakthroughs
+                        </div>
+                        <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.7em', color: '#3b82f6', marginBottom: '2px' }}>P0</div>
+                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#eab308', textShadow: '0 0 10px rgba(234, 179, 8, 0.3)' }}>
+                                    {(breakthroughs as any)['0']}
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.7em', color: '#ef4444', marginBottom: '2px' }}>P1</div>
+                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#eab308', textShadow: '0 0 10px rgba(234, 179, 8, 0.3)' }}>
+                                    {(breakthroughs as any)['1']}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style={{
-                        fontSize: '0.9em',
-                        color: '#666',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '3px',
-                        marginBottom: '4px'
-                    }}>
-                        Front Control
-                    </div>
-                    <div style={{
-                        fontSize: '2.8em',
-                        fontWeight: '900',
-                        color: '#22c55e', // Green for control
-                        textShadow: '0 0 20px rgba(0,0,0,0.4)',
-                        lineHeight: '1'
-                    }}>
-                        {frontControlCount}
+                    {/* Front Control Section */}
+                    <div>
+                        <div style={{ ...LABEL_STYLE, marginBottom: '8px' }}>
+                            Front Control
+                        </div>
+                        <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.7em', color: '#3b82f6', marginBottom: '2px' }}>P0</div>
+                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#22c55e', textShadow: '0 0 10px rgba(34, 197, 94, 0.3)' }}>
+                                    {(frontControlCount as any)['0']}
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.7em', color: '#ef4444', marginBottom: '2px' }}>P1</div>
+                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#22c55e', textShadow: '0 0 10px rgba(34, 197, 94, 0.3)' }}>
+                                    {(frontControlCount as any)['1']}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

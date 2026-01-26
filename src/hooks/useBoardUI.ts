@@ -22,13 +22,24 @@ export const useBoardUI = ({ G, ctx, playerID }: UseBoardUIProps) => {
     const me = G.players[effectivePlayerID as PlayerID];
     const handLimitExceeded = me.hand.length > 7;
 
-    const breakthroughs = me.breakthroughTokens;
-    const frontControlCount = Object.keys(G.columns).filter(id => {
-        const pCol = G.columns[id as keyof typeof G.columns].players[effectivePlayerID as PlayerID];
-        const oppID = (effectivePlayerID === '0' ? '1' : '0') as PlayerID;
-        const oCol = G.columns[id as keyof typeof G.columns].players[oppID];
-        return pCol.front.status === 'OCCUPIED' && pCol.front.isOperational && oCol.front.status === 'EMPTY';
-    }).length;
+    const breakthroughs = {
+        '0': G.players['0'].breakthroughTokens,
+        '1': G.players['1'].breakthroughTokens
+    };
+
+    const getFrontControl = (pid: PlayerID) => {
+        const oppID = (pid === '0' ? '1' : '0') as PlayerID;
+        return Object.keys(G.columns).filter(id => {
+            const pCol = G.columns[id as keyof typeof G.columns].players[pid];
+            const oCol = G.columns[id as keyof typeof G.columns].players[oppID];
+            return pCol.front.status === 'OCCUPIED' && pCol.front.isOperational && oCol.front.status === 'EMPTY';
+        }).length;
+    };
+
+    const frontControlCount = {
+        '0': getFrontControl('0'),
+        '1': getFrontControl('1')
+    };
 
     return {
         selectedCardIndex,
@@ -41,6 +52,7 @@ export const useBoardUI = ({ G, ctx, playerID }: UseBoardUIProps) => {
         me,
         handLimitExceeded,
         breakthroughs,
-        frontControlCount
+        frontControlCount,
+        turnNumber: ctx.turn
     };
 };
